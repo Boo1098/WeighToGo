@@ -1,5 +1,4 @@
 #include <Enes100.h>
-#include <TankSimulation.h>
 #include <math.h>
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
@@ -63,16 +62,16 @@ void setup() {
 
 // Drives to a point on the field with obstacle avoidance.
 void driveFar(float x, float y) {
-  Enes100Simulation.print("Driving to ");
-  Enes100Simulation.print(x);
-  Enes100Simulation.print(", ");
-  Enes100Simulation.println(y);
+  Enes100.print("Driving to ");
+  Enes100.print(x);
+  Enes100.print(", ");
+  Enes100.println(y);
   bool flag = false;
   float kP = 255.0*10.0/3.14;
   while(!flag){
     updateEverything();
     if(obstacle()){
-      Enes100Simulation.println("Obstacle Found!");
+      Enes100.println("Obstacle Found!");
       flag = true;
       avoidObstacle();
     } else {
@@ -104,7 +103,7 @@ void driveFar(float x, float y) {
 
 // Drives robot around an obstacle
 void avoidObstacle(){
-  Enes100Simulation.println("Avoiding Obstacle!");
+  Enes100.println("Avoiding Obstacle!");
   bool flag = false;
   float kP = 255.0*10.0/3.14;
   updateEverything();
@@ -141,8 +140,8 @@ void avoidObstacle(){
 // Points robot towards specified angle.
 // float t - An angle in radians
 void orient(float t) {
-  Enes100Simulation.print("Orienting to ");
-  Enes100Simulation.println(t);
+  Enes100.print("Orienting to ");
+  Enes100.println(t);
   bool flag = false;
   float kP = (255.0-MIN_SPEED_TURN)/3.14;
   while(!flag){
