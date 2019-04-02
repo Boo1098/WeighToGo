@@ -9,6 +9,9 @@
 // I'm lazy
 #define desX Enes100Simulation.destination.x
 #define desY Enes100Simulation.destination.y
+#define locX Enes100Simulation.location.x
+#define locY Enes100Simulation.location.y
+#define locT Enes100Simulation.location.theta
 
 void setup() {
   TankSimulation.begin();
@@ -38,21 +41,6 @@ void setup() {
 
 void loop() {
   
-}
-
-// Gives the angle relative to the horizontal from OSV to target.
-float angleTo(float x, float y) {
-    float delX = x-getX();
-    float delY = y-getY();
-    float angle= atan2(delY, delX);
-    return angle;
-}
-
-// This function computes the distance from the OSV to the coordinate passed in
-float distanceTo(float x, float y) {
-    float delX = getX()-x;
-    float delY = getY()-y;
-    return sqrt(sq(delX)+sq(delY));
 }
 
 // Drives to a point on the field with obstacle avoidance.
@@ -176,21 +164,6 @@ float getUltraDistance(){
 
 void updateEverything(){
   Enes100Simulation.updateLocation();
-}
-
-// Returns OSV X
-float getX(){
-  return Enes100Simulation.location.x;
-}
-
-// Returns OSV Y
-float getY(){
-  return Enes100Simulation.location.y;
-}
-
-// Returns OSV Theta
-float getTheta(){
-  return Enes100Simulation.location.theta;
 }
 
 void printStats(){
