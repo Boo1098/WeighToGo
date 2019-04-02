@@ -7,13 +7,14 @@
 #define DESTINATION_BUFFER_DISTANCE 0.3
 
 // I'm lazy
-#define desX Enes100Simulation.destination.x
-#define desY Enes100Simulation.destination.y
-#define locX Enes100Simulation.location.x
-#define locY Enes100Simulation.location.y
-#define locT Enes100Simulation.location.theta
-#define print Enes100Simulation.print
-#define println Enes100Simulation.println
+#define Enes100 Enes100Simulation
+#define desX Enes100.destination.x
+#define desY Enes100.destination.y
+#define locX Enes100.location.x
+#define locY Enes100.location.y
+#define locT Enes100.location.theta
+#define print Enes100.print
+#define println Enes100.println
 #define updateLocation Enes100.updateLocation
 
 void setup() {
