@@ -4,6 +4,11 @@
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
 
+// Setup Constants
+#define MIN_SPEED_TURN 50.0
+#define OBSTACLE_TRIGGER_DISTANCE 0.1
+#define DESTINATION_BUFFER_DISTANCE 0.3
+
 // Trigger pin of ultrasonic sensor
 #define TRIG_PIN 8 
 // Echo pin of ultrasonic sensor
@@ -40,8 +45,124 @@ void setup() {
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
   
-  while(true){
+  // Start Navigation Code
+
+  //Orient robot towards target.
+  orient(0);
+
+  //Drive to the target close enough.
+  driveFar(desX-DESTINATION_BUFFER_DISTANCE, getY());
+
+  //Point towards final target.
+  orient(angleTo(desX, desY));
+
+  //Drive up close.
+  float dist = distanceTo(desX, desY);
+  driveFar(getX()+(desX-getX())*0.25/dist,getY()+(desY-getY())*0.25/dist);
+}
+
+// Drives to a point on the field with obstacle avoidance.
+void driveFar(float x, float y) {
+  Enes100Simulation.print("Driving to ");
+  Enes100Simulation.print(x);
+  Enes100Simulation.print(", ");
+  Enes100Simulation.println(y);
+  bool flag = false;
+  float kP = 255.0*10.0/3.14;
+  while(!flag){
     updateEverything();
+    if(obstacle()){
+      Enes100Simulation.println("Obstacle Found!");
+      flag = true;
+      avoidObstacle();
+    } else {
+      float leftSpeed = 255;
+      float rightSpeed = 255;
+      float theta = (getTheta() - angleTo(x, y));
+      if(abs(theta)>0.01){
+        if(theta>0){
+          rightSpeed-=abs(kP*theta);
+          if(rightSpeed<-255){
+            rightSpeed=-255;
+          }
+        } else {
+          leftSpeed-=abs(kP*theta);
+          if(leftSpeed<0){
+            leftSpeed=-255;
+          }
+        }
+      }
+      if(distanceTo(x,y)<.05){
+        flag = true;
+        leftSpeed = 0;
+        rightSpeed=0;
+      }
+      setSpeed(leftSpeed,rightSpeed);
+    }
+  }
+}
+
+// Drives robot around an obstacle
+void avoidObstacle(){
+  Enes100Simulation.println("Avoiding Obstacle!");
+  bool flag = false;
+  float kP = 255.0*10.0/3.14;
+  updateEverything();
+  float newY = 0;
+  if(getY()>1.333 ){
+    orient(-3.14/2.0);
+    updateEverything();
+    newY=1;
+    driveFar(getX(), 1+0.333);
+    driveFar(getX()+.4, 1);
+  } else if (getY()>1) {
+    orient(3.14/2.0);
+    updateEverything();
+    newY=1.666;
+    driveFar(getX(), 1.666-0.333);
+    driveFar(getX()+.4, 1.666);
+  } else if (getY()>0.666){
+    orient(-3.14/2.0);
+    updateEverything();
+    newY=0.333;
+    driveFar(getX(), 0.333+0.333);
+    driveFar(getX()+.4, 0.333);
+  } else {
+    orient(3.14/2.0);
+    updateEverything();
+    newY=1;
+    driveFar(getX(), 1-0.333);
+    driveFar(getX()+.4, 1);
+  }
+  orient(0);
+  driveFar(desX-DESTINATION_BUFFER_DISTANCE,newY);
+}
+
+// Points robot towards specified angle.
+// float t - An angle in radians
+void orient(float t) {
+  Enes100Simulation.print("Orienting to ");
+  Enes100Simulation.println(t);
+  bool flag = false;
+  float kP = (255.0-MIN_SPEED_TURN)/3.14;
+  while(!flag){
+    updateEverything();
+    float theta = getTheta();
+    if(abs(theta-t)<.01){
+      flag = true;
+      setSpeed(0,0);
+    } else {
+      float error = theta-t;
+      float output = abs(error)*kP+MIN_SPEED_TURN;
+      if(output>255){
+        output = 255;
+      }
+      if(error>0){
+        setSpeed(output,-output);
+      } else{
+        setSpeed(-output,output);
+      }
+    }
   }
 }
 
@@ -50,16 +171,19 @@ void updateEverything(){
   Enes100.updateLocation();
 }
 
-// Returns distance from OSV to (x,y) location
-float getDistance(float x, float y){
-  return sqrt(sq(x-getX())+sq(y-getY()));
+// Gives the angle relative to the horizontal from OSV to target.
+float angleTo(float x, float y) {
+    float delX = x-getX();
+    float delY = y-getY();
+    float angle= atan2(delY, delX);
+    return angle;
 }
 
-// Returns angle between Horizontal, OSV location, and target (x,y)
-float getAngle(float x, float y){
-  float delX = x-getX();
-  float delY = y-getY();
-  return atan2(delY,delX);
+// This function computes the distance from the OSV to the coordinate passed in
+float distanceTo(float x, float y) {
+    float delX = getX()-x;
+    float delY = getY()-y;
+    return sqrt(sq(delX)+sq(delY));
 }
 
 // Returns OSV X
@@ -85,6 +209,11 @@ float getUltraDistance(int trig, int echo){
   delayMicroseconds(10); 
   digitalWrite(trig, LOW);
   return ((pulseIn(echo, HIGH)*.0343)/2.0)*10.0/11.0;
+}
+
+// Returns true if there is an obstacle detected.
+bool obstacle(){
+  return getUltraDistance()<OBSTACLE_TRIGGER_DISTANCE;
 }
 
 // Sets drive motors speeds
