@@ -19,12 +19,12 @@
 
 void setup() {
   TankSimulation.begin();
-  while (!Enes100Simulation.begin())
+  while (!Enes100.begin())
     ;
 
   println("Starting Navigation");
 
-  while (!Enes100Simulation.updateLocation()) {
+  while (!updateLocation()) {
     println("Unable to update Location");
   }
 
