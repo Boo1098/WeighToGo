@@ -1,6 +1,6 @@
+#include <math.h>
 #include "Enes100Simulation.h"
 #include "TankSimulation.h"
-#include <math.h>
 
 #define MIN_SPEED_TURN 50.0
 #define OBSTACLE_TRIGGER_DISTANCE 0.1
@@ -17,33 +17,33 @@
 
 void setup() {
   TankSimulation.begin();
-  while(!Enes100Simulation.begin());
+  while (!Enes100Simulation.begin())
+    ;
 
   println("Starting Navigation");
 
   while (!Enes100Simulation.updateLocation()) {
     println("Unable to update Location");
   }
-  
+
   printStats();
 
-  //Orient robot towards target.
+  // Orient robot towards target.
   avoidObstacle();
 
-  //Drive to the target close enough.
-  driveFar(desX-DESTINATION_BUFFER_DISTANCE, getY());
+  // Drive to the target close enough.
+  driveFar(desX - DESTINATION_BUFFER_DISTANCE, getY());
 
-  //Point towards final target.
+  // Point towards final target.
   orient(angleTo(desX, desY));
 
-  //Drive up close.
+  // Drive up close.
   float dist = distanceTo(desX, desY);
-  driveFar(getX()+(desX-getX())*0.25/dist,getY()+(desY-getY())*0.25/dist);
+  driveFar(getX() + (desX - getX()) * 0.25 / dist,
+           getY() + (desY - getY()) * 0.25 / dist);
 }
 
-void loop() {
-  
-}
+void loop() {}
 
 // Drives to a point on the field with obstacle avoidance.
 void driveFar(float x, float y) {
@@ -52,10 +52,10 @@ void driveFar(float x, float y) {
   print(", ");
   println(y);
   bool flag = false;
-  float kP = 255.0*10.0/3.14;
-  while(!flag){
+  float kP = 255.0 * 10.0 / 3.14;
+  while (!flag) {
     updateEverything();
-    if(obstacle()){
+    if (obstacle()) {
       println("Obstacle Found!");
       flag = true;
       avoidObstacle();
@@ -63,68 +63,66 @@ void driveFar(float x, float y) {
       float leftSpeed = 255;
       float rightSpeed = 255;
       float theta = (getTheta() - angleTo(x, y));
-      if(abs(theta)>0.01){
-        if(theta>0){
-          rightSpeed-=abs(kP*theta);
-          if(rightSpeed<-255){
-            rightSpeed=-255;
+      if (abs(theta) > 0.01) {
+        if (theta > 0) {
+          rightSpeed -= abs(kP * theta);
+          if (rightSpeed < -255) {
+            rightSpeed = -255;
           }
         } else {
-          leftSpeed-=abs(kP*theta);
-          if(leftSpeed<0){
-            leftSpeed=-255;
+          leftSpeed -= abs(kP * theta);
+          if (leftSpeed < 0) {
+            leftSpeed = -255;
           }
         }
       }
-      if(distanceTo(x,y)<.05){
+      if (distanceTo(x, y) < .05) {
         flag = true;
         leftSpeed = 0;
-        rightSpeed=0;
+        rightSpeed = 0;
       }
-      setSpeed(leftSpeed,rightSpeed);
+      setSpeed(leftSpeed, rightSpeed);
     }
   }
 }
 
 // Returns true if there is an obstacle detected.
-bool obstacle(){
-  return getUltraDistance()<OBSTACLE_TRIGGER_DISTANCE;
-}
+bool obstacle() { return getUltraDistance() < OBSTACLE_TRIGGER_DISTANCE; }
 
 // Drives robot around an obstacle
-void avoidObstacle(){
+void avoidObstacle() {
   println("Avoiding Obstacle!");
   bool flag = false;
-  float kP = 255.0*10.0/3.14;
+  float kP = 255.0 * 10.0 / 3.14;
   updateEverything();
   float newY = 0;
-  if(getY()>1.333 ){
-    orient(-3.14/2.0);
+  if (getY() > 1.333) {
+    orient(-3.14 / 2.0);
     updateEverything();
-    newY=1;
-    driveFar(getX(), 1+0.333);
-    driveFar(getX()+.4, 1);
-  } else if (getY()>1) {
-    orient(3.14/2.0);
+    newY = 1;
+    driveFar(getX(), 1 + 0.333);
+    driveFar(getX() + .4, 1);
+  } else if (getY() > 1) {
+    orient(3.14 / 2.0);
     updateEverything();
-    newY=1.666;
-    driveFar(getX(), 1.666-0.333);
-    driveFar(getX()+.4, 1.666);
-  } else if (getY()>0.666){
-    orient(-3.14/2.0);
+    newY = 1.666;
+    driveFar(getX(), 1.666 - 0.333);
+    driveFar(getX() + .4, 1.666);
+  } else if (getY() > 0.666) {
+    orient(-3.14 / 2.0);
     updateEverything();
-    newY=0.333;
-    driveFar(getX(), 0.333+0.333);
-    driveFar(getX()+.4, 0.333);
+    newY = 0.333;
+    driveFar(getX(), 0.333 + 0.333);
+    driveFar(getX() + .4, 0.333);
   } else {
-    orient(3.14/2.0);
+    orient(3.14 / 2.0);
     updateEverything();
-    newY=1;
-    driveFar(getX(), 1-0.333);
-    driveFar(getX()+.4, 1);
+    newY = 1;
+    driveFar(getX(), 1 - 0.333);
+    driveFar(getX() + .4, 1);
   }
   orient(0);
-  driveFar(desX-DESTINATION_BUFFER_DISTANCE,newY);
+  driveFar(desX - DESTINATION_BUFFER_DISTANCE, newY);
 }
 
 // Points robot towards specified angle.
@@ -133,23 +131,23 @@ void orient(float t) {
   print("Orienting to ");
   println(t);
   bool flag = false;
-  float kP = (255.0-MIN_SPEED_TURN)/3.14;
-  while(!flag){
+  float kP = (255.0 - MIN_SPEED_TURN) / 3.14;
+  while (!flag) {
     updateEverything();
     float theta = getTheta();
-    if(abs(theta-t)<.01){
+    if (abs(theta - t) < .01) {
       flag = true;
-      setSpeed(0,0);
+      setSpeed(0, 0);
     } else {
-      float error = theta-t;
-      float output = abs(error)*kP+MIN_SPEED_TURN;
-      if(output>255){
+      float error = theta - t;
+      float output = abs(error) * kP + MIN_SPEED_TURN;
+      if (output > 255) {
         output = 255;
       }
-      if(error>0){
-        setSpeed(output,-output);
-      } else{
-        setSpeed(-output,output);
+      if (error > 0) {
+        setSpeed(output, -output);
+      } else {
+        setSpeed(-output, output);
       }
     }
   }
@@ -160,15 +158,11 @@ void setSpeed(int left, int right) {
   TankSimulation.setRightMotorPWM(right);
 }
 
-float getUltraDistance(){
-  return Enes100Simulation.readDistanceSensor(1);
-}
+float getUltraDistance() { return Enes100Simulation.readDistanceSensor(1); }
 
-void updateEverything(){
-  Enes100Simulation.updateLocation();
-}
+void updateEverything() { Enes100Simulation.updateLocation(); }
 
-void printStats(){
+void printStats() {
   print("Location: ");
   print(getX());
   print(", ");
@@ -178,4 +172,3 @@ void printStats(){
   print(", ");
   println(desY);
 }
-

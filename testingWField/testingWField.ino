@@ -1,19 +1,19 @@
-#include <Enes100.h>
-#include <math.h>
-#include <Wire.h>
 #include <Adafruit_MotorShield.h>
+#include <Enes100.h>
+#include <Wire.h>
+#include <math.h>
 
 // Setup Constants
 #define MIN_SPEED_TURN 50.0
 #define OBSTACLE_TRIGGER_DISTANCE 0.1
 #define DESTINATION_BUFFER_DISTANCE 0.3
 #define MAX_SPEED 255
-#define SPEED_MULTIPLIER MAX_SPEED/255.0;
-#define DRIVE_FAR_kP 255.0*10.0/3.14
-#define ORIENT_kP (255.0-MIN_SPEED_TURN)/3.14
+#define SPEED_MULTIPLIER MAX_SPEED / 255.0;
+#define DRIVE_FAR_kP 255.0 * 10.0 / 3.14
+#define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
 
 // Trigger pin of ultrasonic sensor
-#define TRIG_PIN 8 
+#define TRIG_PIN 8
 // Echo pin of ultrasonic sensor
 #define ECHO_PIN 7
 
@@ -27,7 +27,7 @@
 #define println Enes100.println
 
 // Create the motor shield object with the default I2C address
-Adafruit_MotorShield AFMS = Adafruit_MotorShield();  
+Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 
 // Create the 4 motors on the OSV
 Adafruit_DCMotor *backRightMotor = AFMS.getMotor(1);
@@ -47,26 +47,27 @@ void setup() {
   println(")");
 
   // Set pin modes of ultrasonic sensor
-  pinMode(TRIG_PIN, OUTPUT); 
+  pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
-  
+
   // Start Navigation Code
 
-  //Orient robot towards target.
+  // Orient robot towards target.
   avoidObstacle();
 
-  //Drive to the target close enough.
-  driveFar(desX-DESTINATION_BUFFER_DISTANCE, getY());
+  // Drive to the target close enough.
+  driveFar(desX - DESTINATION_BUFFER_DISTANCE, getY());
 
-  //Point towards final target.
+  // Point towards final target.
   orient(angleTo(desX, desY));
 
-  //Drive up close.
+  // Drive up close.
   float dist = distanceTo(desX, desY);
-  driveFar(getX()+(desX-getX())*0.25/dist,getY()+(desY-getY())*0.25/dist);
+  driveFar(getX() + (desX - getX()) * 0.25 / dist,
+           getY() + (desY - getY()) * 0.25 / dist);
 }
 
 // Drives to a point on the field with obstacle avoidance.
@@ -76,9 +77,9 @@ void driveFar(float x, float y) {
   print(", ");
   println(y);
   bool flag = false;
-  while(!flag){
+  while (!flag) {
     updateEverything();
-    if(obstacle()){
+    if (obstacle()) {
       println("Obstacle Found!");
       flag = true;
       avoidObstacle();
@@ -86,62 +87,62 @@ void driveFar(float x, float y) {
       float leftSpeed = 255;
       float rightSpeed = 255;
       float theta = (getTheta() - angleTo(x, y));
-      if(abs(theta)>0.01){
-        if(theta>0){
-          rightSpeed-=abs(DRIVE_FAR_kP*theta);
-          if(rightSpeed<-255){
-            rightSpeed=-255;
+      if (abs(theta) > 0.01) {
+        if (theta > 0) {
+          rightSpeed -= abs(DRIVE_FAR_kP * theta);
+          if (rightSpeed < -255) {
+            rightSpeed = -255;
           }
         } else {
-          leftSpeed-=abs(DRIVE_FAR_kP*theta);
-          if(leftSpeed<0){
-            leftSpeed=-255;
+          leftSpeed -= abs(DRIVE_FAR_kP * theta);
+          if (leftSpeed < 0) {
+            leftSpeed = -255;
           }
         }
       }
-      if(distanceTo(x,y)<.05){
+      if (distanceTo(x, y) < .05) {
         flag = true;
         leftSpeed = 0;
-        rightSpeed=0;
+        rightSpeed = 0;
       }
-      setSpeed(leftSpeed,rightSpeed);
+      setSpeed(leftSpeed, rightSpeed);
     }
   }
 }
 
 // Drives robot around an obstacle
-void avoidObstacle(){
+void avoidObstacle() {
   println("Avoiding Obstacle!");
   bool flag = false;
   updateEverything();
   float newY = 0;
-  if(getY()>1.333 ){
-    orient(-3.14/2.0);
+  if (getY() > 1.333) {
+    orient(-3.14 / 2.0);
     updateEverything();
-    newY=1;
-    driveFar(getX(), 1+0.333);
-    driveFar(getX()+.4, 1);
-  } else if (getY()>1) {
-    orient(3.14/2.0);
+    newY = 1;
+    driveFar(getX(), 1 + 0.333);
+    driveFar(getX() + .4, 1);
+  } else if (getY() > 1) {
+    orient(3.14 / 2.0);
     updateEverything();
-    newY=1.666;
-    driveFar(getX(), 1.666-0.333);
-    driveFar(getX()+.4, 1.666);
-  } else if (getY()>0.666){
-    orient(-3.14/2.0);
+    newY = 1.666;
+    driveFar(getX(), 1.666 - 0.333);
+    driveFar(getX() + .4, 1.666);
+  } else if (getY() > 0.666) {
+    orient(-3.14 / 2.0);
     updateEverything();
-    newY=0.333;
-    driveFar(getX(), 0.333+0.333);
-    driveFar(getX()+.4, 0.333);
+    newY = 0.333;
+    driveFar(getX(), 0.333 + 0.333);
+    driveFar(getX() + .4, 0.333);
   } else {
-    orient(3.14/2.0);
+    orient(3.14 / 2.0);
     updateEverything();
-    newY=1;
-    driveFar(getX(), 1-0.333);
-    driveFar(getX()+.4, 1);
+    newY = 1;
+    driveFar(getX(), 1 - 0.333);
+    driveFar(getX() + .4, 1);
   }
   orient(0);
-  driveFar(desX-DESTINATION_BUFFER_DISTANCE,newY);
+  driveFar(desX - DESTINATION_BUFFER_DISTANCE, newY);
 }
 
 // Points robot towards specified angle.
@@ -150,72 +151,68 @@ void orient(float t) {
   print("Orienting to ");
   println(t);
   bool flag = false;
-  while(!flag){
+  while (!flag) {
     updateEverything();
     float theta = getTheta();
-    if(abs(theta-t)<.01){
+    if (abs(theta - t) < .01) {
       flag = true;
-      setSpeed(0,0);
+      setSpeed(0, 0);
     } else {
-      float error = theta-t;
-      float output = abs(error)*ORIENT_kP+MIN_SPEED_TURN;
-      if(output>255){
+      float error = theta - t;
+      float output = abs(error) * ORIENT_kP + MIN_SPEED_TURN;
+      if (output > 255) {
         output = 255;
       }
-      if(error>0){
-        setSpeed(output,-output);
-      } else{
-        setSpeed(-output,output);
+      if (error > 0) {
+        setSpeed(output, -output);
+      } else {
+        setSpeed(-output, output);
       }
     }
   }
 }
 
 // Anything that needs to be ran every tick goes here
-void updateEverything(){
-  Enes100.updateLocation();
-}
+void updateEverything() { Enes100.updateLocation(); }
 
-//unused
-void loop() {
-  
-}
+// unused
+void loop() {}
 
 // Returns ultrasonic distance
-float getUltraDistance(int trig, int echo){
-  digitalWrite(trig, LOW); 
-  delayMicroseconds(2); 
-  digitalWrite(trig, HIGH); 
-  delayMicroseconds(10); 
+float getUltraDistance(int trig, int echo) {
   digitalWrite(trig, LOW);
-  return ((pulseIn(echo, HIGH)*.0343)/2.0)*10.0/11.0;
+  delayMicroseconds(2);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+  return ((pulseIn(echo, HIGH) * .0343) / 2.0) * 10.0 / 11.0;
 }
 
 // Returns true if there is an obstacle detected.
-bool obstacle(){
-  return getUltraDistance(TRIG_PIN, ECHO_PIN)<OBSTACLE_TRIGGER_DISTANCE;
+bool obstacle() {
+  return getUltraDistance(TRIG_PIN, ECHO_PIN) < OBSTACLE_TRIGGER_DISTANCE;
 }
 
 // Sets drive motors speeds
 // -255<=speed<=255
-void setSpeed(int left, int right){
-  if(left<0){
+void setSpeed(int left, int right) {
+  if (left < 0) {
     frontLeftMotor->run(BACKWARD);
     backLeftMotor->run(BACKWARD);
   } else {
     frontLeftMotor->run(FORWARD);
     backLeftMotor->run(FORWARD);
   }
-  if(right<0){
+  if (right < 0) {
     frontRightMotor->run(BACKWARD);
     backRightMotor->run(BACKWARD);
   } else {
     frontRightMotor->run(FORWARD);
     backRightMotor->run(FORWARD);
   }
-  
-  backRightMotor->setSpeed(abs(right)*SPEED_MULTIPLIER);
-  frontRightMotor->setSpeed(abs(right)*SPEED_MULTIPLIER);
-  frontLeftMotor->setSpeed(abs(left)*SPEED_MULTIPLIER);
-  backLeftMotor->setSpeed(abs(left)*SPEED_MULTIPLIER);
+
+  backRightMotor->setSpeed(abs(right) * SPEED_MULTIPLIER);
+  frontRightMotor->setSpeed(abs(right) * SPEED_MULTIPLIER);
+  frontLeftMotor->setSpeed(abs(left) * SPEED_MULTIPLIER);
+  backLeftMotor->setSpeed(abs(left) * SPEED_MULTIPLIER);
 }
