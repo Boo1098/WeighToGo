@@ -3,11 +3,16 @@
 #include <math.h>
 
 #define MIN_SPEED_TURN 50.0
+#define OBSTACLE_TRIGGER_DISTANCE 0.1
 #define DESTINATION_BUFFER_DISTANCE 0.3
+
+// I'm lazy
+#define desX Enes100Simulation.destination.x
+#define desY Enes100Simulation.destination.y
 
 void setup() {
   TankSimulation.begin();
-  while(Enes100Simulation.begin());
+  while(!Enes100Simulation.begin());
 
   Enes100Simulation.println("Starting Navigation");
 
@@ -21,14 +26,14 @@ void setup() {
   orient(0);
 
   //Drive to the target close enough.
-  driveFar(Enes100Simulation.destination.x-DESTINATION_BUFFER_DISTANCE, Enes100Simulation.location.y);
+  driveFar(desX-DESTINATION_BUFFER_DISTANCE, getY());
 
   //Point towards final target.
-  orient(angleTo(Enes100Simulation.destination.x, Enes100Simulation.destination.y));
+  orient(angleTo(desX, desY));
 
   //Drive up close.
-  float dist = distanceTo(Enes100Simulation.destination.x, Enes100Simulation.destination.y);
-  driveFar(Enes100Simulation.location.x+(Enes100Simulation.destination.x-Enes100Simulation.location.x)*0.25/dist,Enes100Simulation.location.y+(Enes100Simulation.destination.y-Enes100Simulation.location.y)*0.25/dist);
+  float dist = distanceTo(desX, desY);
+  driveFar(getX()+(desX-getX())*0.25/dist,getY()+(desY-getY())*0.25/dist);
 }
 
 void loop() {
@@ -37,16 +42,16 @@ void loop() {
 
 // Gives the angle relative to the horizontal from OSV to target.
 float angleTo(float x, float y) {
-    float delX = x-Enes100Simulation.location.x;
-    float delY = y-Enes100Simulation.location.y;
+    float delX = x-getX();
+    float delY = y-getY();
     float angle= atan2(delY, delX);
     return angle;
 }
 
 // This function computes the distance from the OSV to the coordinate passed in
 float distanceTo(float x, float y) {
-    float delX = Enes100Simulation.location.x-x;
-    float delY = Enes100Simulation.location.y-y;
+    float delX = getX()-x;
+    float delY = getY()-y;
     return sqrt(sq(delX)+sq(delY));
 }
 
@@ -67,7 +72,7 @@ void driveFar(float x, float y) {
     } else {
       float leftSpeed = 255;
       float rightSpeed = 255;
-      float theta = (Enes100Simulation.location.theta - angleTo(x, y));
+      float theta = (getTheta() - angleTo(x, y));
       if(abs(theta)>0.01){
         if(theta>0){
           rightSpeed-=abs(kP*theta);
@@ -86,14 +91,14 @@ void driveFar(float x, float y) {
         leftSpeed = 0;
         rightSpeed=0;
       }
-      setMotors(leftSpeed,rightSpeed);
+      setSpeed(leftSpeed,rightSpeed);
     }
   }
 }
 
 // Returns true if there is an obstacle detected.
 bool obstacle(){
-  return (getLeftDistance()<0.1) || (getRightDistance()<0.1);
+  return getUltraDistance()<OBSTACLE_TRIGGER_DISTANCE;
 }
 
 // Drives robot around an obstacle
@@ -103,33 +108,33 @@ void avoidObstacle(){
   float kP = 255.0*10.0/3.14;
   updateEverything();
   float newY = 0;
-  if(Enes100Simulation.location.y>1.333 ){
+  if(getY()>1.333 ){
     orient(-3.14/2.0);
     updateEverything();
     newY=1;
-    driveFar(Enes100Simulation.location.x, 1+0.333);
-    driveFar(Enes100Simulation.location.x+.4, 1);
-  } else if (Enes100Simulation.location.y>1) {
+    driveFar(getX(), 1+0.333);
+    driveFar(getX()+.4, 1);
+  } else if (getY()>1) {
     orient(3.14/2.0);
     updateEverything();
     newY=1.666;
-    driveFar(Enes100Simulation.location.x, 1.666-0.333);
-    driveFar(Enes100Simulation.location.x+.4, 1.666);
-  } else if (Enes100Simulation.location.y>0.666){
+    driveFar(getX(), 1.666-0.333);
+    driveFar(getX()+.4, 1.666);
+  } else if (getY()>0.666){
     orient(-3.14/2.0);
     updateEverything();
     newY=0.333;
-    driveFar(Enes100Simulation.location.x, 0.333+0.333);
-    driveFar(Enes100Simulation.location.x+.4, 0.333);
+    driveFar(getX(), 0.333+0.333);
+    driveFar(getX()+.4, 0.333);
   } else {
     orient(3.14/2.0);
     updateEverything();
     newY=1;
-    driveFar(Enes100Simulation.location.x, 1-0.333);
-    driveFar(Enes100Simulation.location.x+.4, 1);
+    driveFar(getX(), 1-0.333);
+    driveFar(getX()+.4, 1);
   }
   orient(0);
-  driveFar(Enes100Simulation.destination.x-DESTINATION_BUFFER_DISTANCE,newY);
+  driveFar(desX-DESTINATION_BUFFER_DISTANCE,newY);
 }
 
 // Points robot towards specified angle.
@@ -141,10 +146,10 @@ void orient(float t) {
   float kP = (255.0-MIN_SPEED_TURN)/3.14;
   while(!flag){
     updateEverything();
-    float theta = Enes100Simulation.location.theta;
+    float theta = getTheta();
     if(abs(theta-t)<.01){
       flag = true;
-      setMotors(0,0);
+      setSpeed(0,0);
     } else {
       float error = theta-t;
       float output = abs(error)*kP+MIN_SPEED_TURN;
@@ -152,39 +157,50 @@ void orient(float t) {
         output = 255;
       }
       if(error>0){
-        setMotors(output,-output);
+        setSpeed(output,-output);
       } else{
-        setMotors(-output,output);
+        setSpeed(-output,output);
       }
     }
   }
 }
 
-void setMotors(int left, int right) {
+void setSpeed(int left, int right) {
   TankSimulation.setLeftMotorPWM(left);
   TankSimulation.setRightMotorPWM(right);
 }
 
-float getLeftDistance(){
-  return Enes100Simulation.readDistanceSensor(0);
-}
-
-float getRightDistance(){
-  return Enes100Simulation.readDistanceSensor(2);
+float getUltraDistance(){
+  return Enes100Simulation.readDistanceSensor(1);
 }
 
 void updateEverything(){
   Enes100Simulation.updateLocation();
 }
 
+// Returns OSV X
+float getX(){
+  return Enes100Simulation.location.x;
+}
+
+// Returns OSV Y
+float getY(){
+  return Enes100Simulation.location.y;
+}
+
+// Returns OSV Theta
+float getTheta(){
+  return Enes100Simulation.location.theta;
+}
+
 void printStats(){
   Enes100Simulation.print("Location: ");
-  Enes100Simulation.print(Enes100Simulation.location.x);
+  Enes100Simulation.print(getX());
   Enes100Simulation.print(", ");
-  Enes100Simulation.println(Enes100Simulation.location.y);
+  Enes100Simulation.println(getY());
   Enes100Simulation.print("Destination: ");
-  Enes100Simulation.print(Enes100Simulation.destination.x);
+  Enes100Simulation.print(desX);
   Enes100Simulation.print(", ");
-  Enes100Simulation.println(Enes100Simulation.destination.y);
+  Enes100Simulation.println(desY);
 }
 
