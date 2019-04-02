@@ -212,7 +212,7 @@ float getUltraDistance(int trig, int echo){
 
 // Returns true if there is an obstacle detected.
 bool obstacle(){
-  return getUltraDistance()<OBSTACLE_TRIGGER_DISTANCE;
+  return getUltraDistance(TRIG_PIN, ECHO_PIN)<OBSTACLE_TRIGGER_DISTANCE;
 }
 
 // Sets drive motors speeds
