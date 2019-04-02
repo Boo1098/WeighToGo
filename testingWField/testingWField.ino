@@ -7,6 +7,8 @@
 #define MIN_SPEED_TURN 50.0
 #define OBSTACLE_TRIGGER_DISTANCE 0.1
 #define DESTINATION_BUFFER_DISTANCE 0.3
+#define DRIVE_FAR_kP 255.0*10.0/3.14
+#define ORIENT_kP (255.0-MIN_SPEED_TURN)/3.14
 
 // Trigger pin of ultrasonic sensor
 #define TRIG_PIN 8 
@@ -50,7 +52,7 @@ void setup() {
   // Start Navigation Code
 
   //Orient robot towards target.
-  orient(0);
+  avoidObstacle();
 
   //Drive to the target close enough.
   driveFar(desX-DESTINATION_BUFFER_DISTANCE, getY());
@@ -70,7 +72,6 @@ void driveFar(float x, float y) {
   Enes100.print(", ");
   Enes100.println(y);
   bool flag = false;
-  float kP = 255.0*10.0/3.14;
   while(!flag){
     updateEverything();
     if(obstacle()){
@@ -83,12 +84,12 @@ void driveFar(float x, float y) {
       float theta = (getTheta() - angleTo(x, y));
       if(abs(theta)>0.01){
         if(theta>0){
-          rightSpeed-=abs(kP*theta);
+          rightSpeed-=abs(DRIVE_FAR_kP*theta);
           if(rightSpeed<-255){
             rightSpeed=-255;
           }
         } else {
-          leftSpeed-=abs(kP*theta);
+          leftSpeed-=abs(DRIVE_FAR_kP*theta);
           if(leftSpeed<0){
             leftSpeed=-255;
           }
@@ -108,7 +109,6 @@ void driveFar(float x, float y) {
 void avoidObstacle(){
   Enes100.println("Avoiding Obstacle!");
   bool flag = false;
-  float kP = 255.0*10.0/3.14;
   updateEverything();
   float newY = 0;
   if(getY()>1.333 ){
@@ -146,7 +146,6 @@ void orient(float t) {
   Enes100.print("Orienting to ");
   Enes100.println(t);
   bool flag = false;
-  float kP = (255.0-MIN_SPEED_TURN)/3.14;
   while(!flag){
     updateEverything();
     float theta = getTheta();
@@ -155,7 +154,7 @@ void orient(float t) {
       setSpeed(0,0);
     } else {
       float error = theta-t;
-      float output = abs(error)*kP+MIN_SPEED_TURN;
+      float output = abs(error)*ORIENT_kP+MIN_SPEED_TURN;
       if(output>255){
         output = 255;
       }
