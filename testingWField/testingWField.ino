@@ -7,6 +7,8 @@
 #define MIN_SPEED_TURN 50.0
 #define OBSTACLE_TRIGGER_DISTANCE 0.1
 #define DESTINATION_BUFFER_DISTANCE 0.3
+#define MAX_SPEED 255
+#define SPEED_MULTIPLIER MAX_SPEED/255.0;
 #define DRIVE_FAR_kP 255.0*10.0/3.14
 #define ORIENT_kP (255.0-MIN_SPEED_TURN)/3.14
 
@@ -212,8 +214,8 @@ void setSpeed(int left, int right){
     backRightMotor->run(FORWARD);
   }
   
-  backRightMotor->setSpeed(abs(right));
-  frontRightMotor->setSpeed(abs(right));
-  frontLeftMotor->setSpeed(abs(left));
-  backLeftMotor->setSpeed(abs(left));
+  backRightMotor->setSpeed(abs(right)*SPEED_MULTIPLIER);
+  frontRightMotor->setSpeed(abs(right)*SPEED_MULTIPLIER);
+  frontLeftMotor->setSpeed(abs(left)*SPEED_MULTIPLIER);
+  backLeftMotor->setSpeed(abs(left)*SPEED_MULTIPLIER);
 }
