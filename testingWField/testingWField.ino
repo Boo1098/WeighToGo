@@ -21,6 +21,8 @@
 #define locX Enes100.location.x
 #define locY Enes100.location.y
 #define locT Enes100.location.theta
+#define print Enes100.print
+#define println Enes100.println
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();  
@@ -36,11 +38,11 @@ void setup() {
   Enes100.begin("Weigh to go", DEBRIS, 3, 8, 9);
 
   // Print out destination location
-  Enes100.print("Destination is at (");
-  Enes100.print(desX);
-  Enes100.print(", ");
-  Enes100.print(desY);
-  Enes100.println(")");
+  print("Destination is at (");
+  print(desX);
+  print(", ");
+  print(desY);
+  println(")");
 
   // Set pin modes of ultrasonic sensor
   pinMode(TRIG_PIN, OUTPUT); 
@@ -67,15 +69,15 @@ void setup() {
 
 // Drives to a point on the field with obstacle avoidance.
 void driveFar(float x, float y) {
-  Enes100.print("Driving to ");
-  Enes100.print(x);
-  Enes100.print(", ");
-  Enes100.println(y);
+  print("Driving to ");
+  print(x);
+  print(", ");
+  println(y);
   bool flag = false;
   while(!flag){
     updateEverything();
     if(obstacle()){
-      Enes100.println("Obstacle Found!");
+      println("Obstacle Found!");
       flag = true;
       avoidObstacle();
     } else {
@@ -107,7 +109,7 @@ void driveFar(float x, float y) {
 
 // Drives robot around an obstacle
 void avoidObstacle(){
-  Enes100.println("Avoiding Obstacle!");
+  println("Avoiding Obstacle!");
   bool flag = false;
   updateEverything();
   float newY = 0;
@@ -143,8 +145,8 @@ void avoidObstacle(){
 // Points robot towards specified angle.
 // float t - An angle in radians
 void orient(float t) {
-  Enes100.print("Orienting to ");
-  Enes100.println(t);
+  print("Orienting to ");
+  println(t);
   bool flag = false;
   while(!flag){
     updateEverything();
