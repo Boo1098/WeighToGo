@@ -12,15 +12,17 @@
 #define locX Enes100Simulation.location.x
 #define locY Enes100Simulation.location.y
 #define locT Enes100Simulation.location.theta
+#define print Enes100Simulation.print
+#define println Enes100Simulation.println
 
 void setup() {
   TankSimulation.begin();
   while(!Enes100Simulation.begin());
 
-  Enes100Simulation.println("Starting Navigation");
+  println("Starting Navigation");
 
   while (!Enes100Simulation.updateLocation()) {
-    Enes100Simulation.println("Unable to update Location");
+    println("Unable to update Location");
   }
   
   printStats();
@@ -45,16 +47,16 @@ void loop() {
 
 // Drives to a point on the field with obstacle avoidance.
 void driveFar(float x, float y) {
-  Enes100Simulation.print("Driving to ");
-  Enes100Simulation.print(x);
-  Enes100Simulation.print(", ");
-  Enes100Simulation.println(y);
+  print("Driving to ");
+  print(x);
+  print(", ");
+  println(y);
   bool flag = false;
   float kP = 255.0*10.0/3.14;
   while(!flag){
     updateEverything();
     if(obstacle()){
-      Enes100Simulation.println("Obstacle Found!");
+      println("Obstacle Found!");
       flag = true;
       avoidObstacle();
     } else {
@@ -91,7 +93,7 @@ bool obstacle(){
 
 // Drives robot around an obstacle
 void avoidObstacle(){
-  Enes100Simulation.println("Avoiding Obstacle!");
+  println("Avoiding Obstacle!");
   bool flag = false;
   float kP = 255.0*10.0/3.14;
   updateEverything();
@@ -128,8 +130,8 @@ void avoidObstacle(){
 // Points robot towards specified angle.
 // float t - An angle in radians
 void orient(float t) {
-  Enes100Simulation.print("Orienting to ");
-  Enes100Simulation.println(t);
+  print("Orienting to ");
+  println(t);
   bool flag = false;
   float kP = (255.0-MIN_SPEED_TURN)/3.14;
   while(!flag){
@@ -167,13 +169,13 @@ void updateEverything(){
 }
 
 void printStats(){
-  Enes100Simulation.print("Location: ");
-  Enes100Simulation.print(getX());
-  Enes100Simulation.print(", ");
-  Enes100Simulation.println(getY());
-  Enes100Simulation.print("Destination: ");
-  Enes100Simulation.print(desX);
-  Enes100Simulation.print(", ");
-  Enes100Simulation.println(desY);
+  print("Location: ");
+  print(getX());
+  print(", ");
+  println(getY());
+  print("Destination: ");
+  print(desX);
+  print(", ");
+  println(desY);
 }
 
