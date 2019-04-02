@@ -26,7 +26,7 @@ void setup() {
   printStats();
 
   //Orient robot towards target.
-  orient(0);
+  avoidObstacle();
 
   //Drive to the target close enough.
   driveFar(desX-DESTINATION_BUFFER_DISTANCE, getY());
