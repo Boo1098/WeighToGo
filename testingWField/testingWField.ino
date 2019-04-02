@@ -25,6 +25,7 @@
 #define locT Enes100.location.theta
 #define print Enes100.print
 #define println Enes100.println
+#define updateLocation Enes100.updateLocation
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
@@ -171,9 +172,6 @@ void orient(float t) {
     }
   }
 }
-
-// Anything that needs to be ran every tick goes here
-void updateEverything() { Enes100.updateLocation(); }
 
 // unused
 void loop() {}

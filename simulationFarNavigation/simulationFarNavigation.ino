@@ -14,6 +14,7 @@
 #define locT Enes100Simulation.location.theta
 #define print Enes100Simulation.print
 #define println Enes100Simulation.println
+#define updateLocation Enes100.updateLocation
 
 void setup() {
   TankSimulation.begin();
@@ -159,8 +160,6 @@ void setSpeed(int left, int right) {
 }
 
 float getUltraDistance() { return Enes100Simulation.readDistanceSensor(1); }
-
-void updateEverything() { Enes100Simulation.updateLocation(); }
 
 void printStats() {
   print("Location: ");

@@ -27,3 +27,6 @@ float getY() {
 float getTheta() {
   return locT;
 }
+
+// Anything that needs to be ran every tick goes here
+void updateEverything() { updateLocation(); }
