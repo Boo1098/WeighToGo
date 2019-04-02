@@ -29,7 +29,7 @@ Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 
 void setup() {
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  Enes100.begin("Weight to go", DEBRIS, 3, 8, 9);
+  Enes100.begin("Weigh to go", DEBRIS, 3, 8, 9);
 
   // Print out destination location
   Enes100.print("Destination is at (");
