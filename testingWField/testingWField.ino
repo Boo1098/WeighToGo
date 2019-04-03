@@ -69,8 +69,8 @@ void setup() {
 
   // Drive up close.
   float dist = distanceTo(desX, desY);
-  driveFar(getX() + (desX - getX()) * 0.25 / dist,
-           getY() + (desY - getY()) * 0.25 / dist);
+  driveFar(getX() + (desX - getX()) * DESTINATION_BUFFER_DISTANCE / dist,
+           getY() + (desY - getY()) * DESTINATION_BUFFER_DISTANCE / dist);
 }
 
 // Drives to a point on the field with obstacle avoidance.
