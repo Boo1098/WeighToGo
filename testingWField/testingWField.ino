@@ -40,21 +40,21 @@ Adafruit_DCMotor *frontRightMotor = AFMS.getMotor(2);
 Adafruit_DCMotor *frontLeftMotor = AFMS.getMotor(3);
 Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 
-HX711 scale;
+// HX711 scale;
 
 float calibration_factor = -242;
 
 void setup() {
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 8, 9)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 9, 10)) {
     println("Waiting for Connection.");
   }
 
-  scale.begin(DOUT, CLK);
-  scale.set_scale();
-  scale.tare(); //Reset the scale to 0
+  // scale.begin(DOUT, CLK);
+  // scale.set_scale();
+  // scale.tare(); //Reset the scale to 0
 
-  long zero_factor = scale.read_average();
+  // long zero_factor = scale.read_average();
 
   // Print out destination location
   print("Destination is at (");
@@ -235,5 +235,5 @@ void setSpeed(int left, int right) {
 }
 
 float getWeight(){
-  return scale.get_units();
+  //return scale.get_units();
 }
