@@ -2,12 +2,13 @@
 #include <Enes100.h>
 #include <Wire.h>
 #include <math.h>
+#include "HX711.h"
 
 // Setup Constants
 #define MIN_SPEED_TURN 50.0
 #define OBSTACLE_TRIGGER_DISTANCE 0.1
 #define DESTINATION_BUFFER_DISTANCE 0.3
-#define MAX_SPEED 255
+#define MAX_SPEED 255.0
 #define SPEED_MULTIPLIER MAX_SPEED / 255.0
 #define DRIVE_FAR_kP 255.0 * 10.0 / 3.14
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
@@ -18,8 +19,8 @@
 #define ECHO_PIN 11
 
 // Load cell pins
-#define DOUT  3
-#define CLK  2
+#define DOUT 3
+#define CLK 2
 
 // I'm lazy
 #define desX Enes100.destination.x
@@ -40,19 +41,20 @@ Adafruit_DCMotor *frontRightMotor = AFMS.getMotor(2);
 Adafruit_DCMotor *frontLeftMotor = AFMS.getMotor(3);
 Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 
-// HX711 scale;
+HX711 scale;
 
 float calibration_factor = -242;
 
 void setup() {
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
   while (!Enes100.begin("Weigh to go", DEBRIS, 5, 9, 10)) {
-    println("Waiting for Connection.");
+    //println("Waiting for Connection.");
   }
+  println("Connected!");
 
-  // scale.begin(DOUT, CLK);
-  // scale.set_scale();
-  // scale.tare(); //Reset the scale to 0
+  scale.begin(DOUT, CLK);
+  scale.set_scale();
+  scale.tare();  //Reset the scale to 0
 
   // long zero_factor = scale.read_average();
 
@@ -73,13 +75,16 @@ void setup() {
   // Start Navigation Code
 
   orient(0);
-  driveFar(locY,2);
+
+  delay(5000);
+
+  driveFar(locY, 2, false);
 
   // Orient robot towards target.
   // avoidObstacle();
 
   // // Drive to the target close enough.
-  // driveFar(desX - DESTINATION_BUFFER_DISTANCE, getY());
+  // driveFar(desX - DESTINATION_BUFFER_DISTANCE, getY(), true);
 
   // // Point towards final target.
   // orient(angleTo(desX, desY));
@@ -90,8 +95,8 @@ void setup() {
   //          getY() + (desY - getY()) * DESTINATION_BUFFER_DISTANCE / dist);
 }
 
-// Drives to a point on the field with obstacle avoidance.
-void driveFar(float x, float y) {
+// Drives to a point on the field with obstacle avoidance if obsCheck = true.
+void driveFar(float x, float y, bool obsCheck) {
   print("Driving to ");
   print(x);
   print(", ");
@@ -99,7 +104,7 @@ void driveFar(float x, float y) {
   bool flag = false;
   while (!flag) {
     updateEverything();
-    if (obstacle()) {
+    if (obstacle() && obsCheck) {
       println("Obstacle Found!");
       flag = true;
       avoidObstacle();
@@ -140,29 +145,29 @@ void avoidObstacle() {
     orient(-3.14 / 2.0);
     updateEverything();
     newY = 1;
-    driveFar(getX(), 1 + 0.333);
-    driveFar(getX() + .4, 1);
+    driveFar(getX(), 1 + 0.333, true);
+    driveFar(getX() + .4, 1, true);
   } else if (getY() > 1) {
     orient(3.14 / 2.0);
     updateEverything();
     newY = 1.666;
-    driveFar(getX(), 1.666 - 0.333);
-    driveFar(getX() + .4, 1.666);
+    driveFar(getX(), 1.666 - 0.333, true);
+    driveFar(getX() + .4, 1.666, true);
   } else if (getY() > 0.666) {
     orient(-3.14 / 2.0);
     updateEverything();
     newY = 0.333;
-    driveFar(getX(), 0.333 + 0.333);
-    driveFar(getX() + .4, 0.333);
+    driveFar(getX(), 0.333 + 0.333, true);
+    driveFar(getX() + .4, 0.333, true);
   } else {
     orient(3.14 / 2.0);
     updateEverything();
     newY = 1;
-    driveFar(getX(), 1 - 0.333);
-    driveFar(getX() + .4, 1);
+    driveFar(getX(), 1 - 0.333, true);
+    driveFar(getX() + .4, 1, true);
   }
   orient(0);
-  driveFar(desX - DESTINATION_BUFFER_DISTANCE, newY);
+  driveFar(desX - DESTINATION_BUFFER_DISTANCE, newY, true);
 }
 
 // Points robot towards specified angle.
@@ -234,6 +239,17 @@ void setSpeed(int left, int right) {
   backLeftMotor->setSpeed(abs(left) * SPEED_MULTIPLIER);
 }
 
-float getWeight(){
-  //return scale.get_units();
+float getWeight() {
+  return scale.get_units();
+}
+
+void printStats() {
+  print("Location: ");
+  print(getX());
+  print(", ");
+  println(getY());
+  print("Destination: ");
+  print(desX);
+  print(", ");
+  println(desY);
 }
