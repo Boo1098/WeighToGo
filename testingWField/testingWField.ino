@@ -78,7 +78,7 @@ void setup() {
 
   delay(5000);
 
-  driveFar(locY, 2, false);
+  driveFar(2, locY, false);
 
   // Orient robot towards target.
   // avoidObstacle();
