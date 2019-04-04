@@ -251,5 +251,7 @@ void printStats() {
   print("Destination: ");
   print(desX);
   print(", ");
-  println(desY);
+  print(desY);
+  print(" ");
+  println(millis);
 }
