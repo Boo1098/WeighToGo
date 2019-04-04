@@ -13,9 +13,13 @@
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
 
 // Trigger pin of ultrasonic sensor
-#define TRIG_PIN 8
+#define TRIG_PIN 12
 // Echo pin of ultrasonic sensor
-#define ECHO_PIN 7
+#define ECHO_PIN 11
+
+// Load cell pins
+#define DOUT  3
+#define CLK  2
 
 // I'm lazy
 #define desX Enes100.destination.x
@@ -36,11 +40,21 @@ Adafruit_DCMotor *frontRightMotor = AFMS.getMotor(2);
 Adafruit_DCMotor *frontLeftMotor = AFMS.getMotor(3);
 Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 
+HX711 scale;
+
+float calibration_factor = -242;
+
 void setup() {
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 3, 8, 9)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 8, 9)) {
     println("Waiting for Connection.");
   }
+
+  scale.begin(DOUT, CLK);
+  scale.set_scale();
+  scale.tare(); //Reset the scale to 0
+
+  long zero_factor = scale.read_average();
 
   // Print out destination location
   print("Destination is at (");
@@ -58,19 +72,22 @@ void setup() {
 
   // Start Navigation Code
 
+  orient(0);
+  driveFar(locY,2);
+
   // Orient robot towards target.
-  avoidObstacle();
+  // avoidObstacle();
 
-  // Drive to the target close enough.
-  driveFar(desX - DESTINATION_BUFFER_DISTANCE, getY());
+  // // Drive to the target close enough.
+  // driveFar(desX - DESTINATION_BUFFER_DISTANCE, getY());
 
-  // Point towards final target.
-  orient(angleTo(desX, desY));
+  // // Point towards final target.
+  // orient(angleTo(desX, desY));
 
-  // Drive up close.
-  float dist = distanceTo(desX, desY);
-  driveFar(getX() + (desX - getX()) * DESTINATION_BUFFER_DISTANCE / dist,
-           getY() + (desY - getY()) * DESTINATION_BUFFER_DISTANCE / dist);
+  // // Drive up close.
+  // float dist = distanceTo(desX, desY);
+  // driveFar(getX() + (desX - getX()) * DESTINATION_BUFFER_DISTANCE / dist,
+  //          getY() + (desY - getY()) * DESTINATION_BUFFER_DISTANCE / dist);
 }
 
 // Drives to a point on the field with obstacle avoidance.
@@ -215,4 +232,8 @@ void setSpeed(int left, int right) {
   frontRightMotor->setSpeed(abs(right) * SPEED_MULTIPLIER);
   frontLeftMotor->setSpeed(abs(left) * SPEED_MULTIPLIER);
   backLeftMotor->setSpeed(abs(left) * SPEED_MULTIPLIER);
+}
+
+float getWeight(){
+  return scale.get_units();
 }

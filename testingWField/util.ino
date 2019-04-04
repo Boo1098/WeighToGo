@@ -29,4 +29,7 @@ float getTheta() {
 }
 
 // Anything that needs to be ran every tick goes here
-void updateEverything() { updateLocation(); }
+void updateEverything() { 
+  updateLocation();
+  scale.set_scale(calibration_factor); 
+}
