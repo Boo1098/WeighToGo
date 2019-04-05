@@ -10,7 +10,7 @@
 #define DESTINATION_BUFFER_DISTANCE 0.3
 #define MAX_SPEED 255.0
 #define SPEED_MULTIPLIER MAX_SPEED / 255.0
-#define DRIVE_FAR_kP 255.0 * 10.0 / 3.14
+#define DRIVE_FAR_kP 255.0 * 15.0 / 3.14
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
 
 // Trigger pin of ultrasonic sensor
@@ -46,9 +46,12 @@ float calibration_factor = -242;
 
 void setup() {
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 9, 10)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
     //Eprintln("Waiting for Connection.");
   }
+
+  delay(500);
+
   Enes100.println("Connected!");
 
   scale.begin(DOUT, CLK);
@@ -72,26 +75,44 @@ void setup() {
   AFMS.begin();  // create with the default frequency 1.6KHz
 
   // Start Navigation Code
+  //delay(5000);
+  // while (true) {
+  //   updateEverything();
+  //   delay(1000);
+  // }
 
-  orient(0);
+  //delay(10000);
 
-  delay(5000);
+  long start = millis();
+  while (millis() - start < 10000) {
+    updateEverything();
+  }
 
-  driveFar(2, locY, false);
+  //orient(3.14 / 2);
+
+  driveFar(3.5, locY, false);
+  // setSpeed(100, 100);
+  // delay(5000);
+  // setSpeed(25, 25);
+  // delay(5000);
+  // setSpeed(10, -10);
+  // delay(5000);
+
+  // driveFar(2, locY, false);
 
   // Orient robot towards target.
   // avoidObstacle();
 
   // // Drive to the target close enough.
-  // driveFar(desX - DESTINATION_BUFFER_DISTANCE, getY(), true);
+  // driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
 
   // // Point towards final target.
   // orient(angleTo(desX, desY));
 
   // // Drive up close.
   // float dist = distanceTo(desX, desY);
-  // driveFar(getX() + (desX - getX()) * DESTINATION_BUFFER_DISTANCE / dist,
-  //          getY() + (desY - getY()) * DESTINATION_BUFFER_DISTANCE / dist);
+  // driveFar(locX + (desX - locX) * DESTINATION_BUFFER_DISTANCE / dist,
+  //          locY + (desY - locY) * DESTINATION_BUFFER_DISTANCE / dist);
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -110,7 +131,7 @@ void driveFar(float x, float y, bool obsCheck) {
     } else {
       float leftSpeed = 255;
       float rightSpeed = 255;
-      float theta = (getTheta() - angleTo(x, y));
+      float theta = (locT - angleTo(x, y));
       if (abs(theta) > 0.01) {
         if (theta > 0) {
           rightSpeed -= abs(DRIVE_FAR_kP * theta);
@@ -119,7 +140,7 @@ void driveFar(float x, float y, bool obsCheck) {
           }
         } else {
           leftSpeed -= abs(DRIVE_FAR_kP * theta);
-          if (leftSpeed < 0) {
+          if (leftSpeed < -255) {
             leftSpeed = -255;
           }
         }
@@ -140,30 +161,30 @@ void avoidObstacle() {
   bool flag = false;
   updateEverything();
   float newY = 0;
-  if (getY() > 1.333) {
+  if (locY > 1.333) {
     orient(-3.14 / 2.0);
     updateEverything();
     newY = 1;
-    driveFar(getX(), 1 + 0.333, true);
-    driveFar(getX() + .4, 1, true);
-  } else if (getY() > 1) {
+    driveFar(locX, 1 + 0.333, true);
+    driveFar(locX + .4, 1, true);
+  } else if (locY > 1) {
     orient(3.14 / 2.0);
     updateEverything();
     newY = 1.666;
-    driveFar(getX(), 1.666 - 0.333, true);
-    driveFar(getX() + .4, 1.666, true);
-  } else if (getY() > 0.666) {
+    driveFar(locX, 1.666 - 0.333, true);
+    driveFar(locX + .4, 1.666, true);
+  } else if (locY > 0.666) {
     orient(-3.14 / 2.0);
     updateEverything();
     newY = 0.333;
-    driveFar(getX(), 0.333 + 0.333, true);
-    driveFar(getX() + .4, 0.333, true);
+    driveFar(locX, 0.333 + 0.333, true);
+    driveFar(locX + .4, 0.333, true);
   } else {
     orient(3.14 / 2.0);
     updateEverything();
     newY = 1;
-    driveFar(getX(), 1 - 0.333, true);
-    driveFar(getX() + .4, 1, true);
+    driveFar(locX, 1 - 0.333, true);
+    driveFar(locX + .4, 1, true);
   }
   orient(0);
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, newY, true);
@@ -172,17 +193,19 @@ void avoidObstacle() {
 // Points robot towards specified angle.
 // float t - An angle in radians
 void orient(float t) {
+  t += 1;
   Enes100.print("Orienting to ");
   Enes100.println(t);
   bool flag = false;
   while (!flag) {
     updateEverything();
-    float theta = getTheta();
-    if (abs(theta - t) < .01) {
+    float theta = locT;
+    float error = theta - t;
+    if (abs(error) < .01) {
+      Enes100.println("Oriented");
       flag = true;
       setSpeed(0, 0);
     } else {
-      float error = theta - t;
       float output = abs(error) * ORIENT_kP + MIN_SPEED_TURN;
       if (output > 255) {
         output = 255;
@@ -244,19 +267,13 @@ float getWeight() {
 
 void printStats() {
   Enes100.print("Location: ");
-  Enes100.print(getX());
+  Enes100.print(locX);
   Enes100.print(", ");
-  Enes100.print(getY());
+  Enes100.print(locY);
   Enes100.print(", ");
-  Enes100.println(getTheta());
-  Enes100.print("Destination: ");
-  Enes100.print(desX);
-  Enes100.print(", ");
-  Enes100.print(desY);
-  Enes100.print(" ");
-  Enes100.println((int)millis);
+  Enes100.println(locT);
   Enes100.print("Sensors: ");
   Enes100.print(getWeight());
   Enes100.print("    ");
-  Enes100.print(getUltraDistance(TRIG_PIN, ECHO_PIN));
+  Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
 }
