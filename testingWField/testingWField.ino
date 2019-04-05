@@ -2,7 +2,7 @@
 #include <Enes100.h>
 #include <Wire.h>
 #include <math.h>
-// #include "HX711.h"
+#include "HX711.h"
 
 // Setup Constants
 #define MIN_SPEED_TURN 50.0
@@ -40,7 +40,7 @@ Adafruit_DCMotor *frontRightMotor = AFMS.getMotor(2);
 Adafruit_DCMotor *frontLeftMotor = AFMS.getMotor(3);
 Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 
-// HX711 scale;
+HX711 scale;
 
 float calibration_factor = -242;
 
@@ -51,9 +51,9 @@ void setup() {
   }
   Enes100.println("Connected!");
 
-  // scale.begin(DOUT, CLK);
-  // scale.set_scale();
-  // scale.tare();  //Reset the scale to 0
+  scale.begin(DOUT, CLK);
+  scale.set_scale();
+  scale.tare();  //Reset the scale to 0
 
   // long zero_factor = scale.read_average();
 
@@ -238,9 +238,9 @@ void setSpeed(int left, int right) {
   backLeftMotor->setSpeed(abs(left) * SPEED_MULTIPLIER);
 }
 
-// float getWeight() {
-//   return scale.get_units();
-// }
+float getWeight() {
+  return scale.get_units();
+}
 
 void printStats() {
   Enes100.print("Location: ");
@@ -254,5 +254,5 @@ void printStats() {
   Enes100.print(", ");
   Enes100.print(desY);
   Enes100.print(" ");
-  Enes100.println(millis);
+  // Enes100.println(millis);
 }
