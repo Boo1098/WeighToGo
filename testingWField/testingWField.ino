@@ -255,4 +255,5 @@ void printStats() {
   Enes100.print(desY);
   Enes100.print(" ");
   Enes100.println((int)millis);
+  Enes100.println(getWeight());
 }
