@@ -1,5 +1,5 @@
 {
     "board": "arduino:avr:uno",
-    "port": "COM4",
+    "port": "COM10",
     "sketch": "testingWField.ino"
 }

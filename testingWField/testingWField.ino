@@ -9,7 +9,6 @@
 #define OBSTACLE_TRIGGER_DISTANCE 15.0
 #define DESTINATION_BUFFER_DISTANCE 0.3
 #define MAX_SPEED 255.0
-#define SPEED_MULTIPLIER MAX_SPEED / 255.0
 #define DRIVE_FAR_kP 255.0 * 15.0 / 3.14
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
 
@@ -91,11 +90,11 @@ void setup() {
   //orient(3.14 / 2);
 
   driveFar(3.5, locY, false);
-  // setSpeed(100, 100);
+  // setMotorSpeed(100, 100);
   // delay(5000);
-  // setSpeed(25, 25);
+  // setMotorSpeed(25, 25);
   // delay(5000);
-  // setSpeed(10, -10);
+  // setMotorSpeed(10, -10);
   // delay(5000);
 
   // driveFar(2, locY, false);
@@ -116,7 +115,7 @@ void setup() {
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
-void driveFar(float x, float y, bool obsCheck) {
+void driveFar(double x, double y, bool obsCheck) {
   Enes100.print("Driving to ");
   Enes100.print(x);
   Enes100.print(", ");
@@ -129,9 +128,9 @@ void driveFar(float x, float y, bool obsCheck) {
       flag = true;
       avoidObstacle();
     } else {
-      float leftSpeed = 255;
-      float rightSpeed = 255;
-      float theta = (locT - angleTo(x, y));
+      double leftSpeed = 255;
+      double rightSpeed = 255;
+      double theta = (locT - angleTo(x, y));
       if (abs(theta) > 0.01) {
         if (theta > 0) {
           rightSpeed -= abs(DRIVE_FAR_kP * theta);
@@ -150,7 +149,11 @@ void driveFar(float x, float y, bool obsCheck) {
         leftSpeed = 0;
         rightSpeed = 0;
       }
-      setSpeed(leftSpeed, rightSpeed);
+      Enes100.print("left: ");
+      Enes100.print(leftSpeed);
+      Enes100.print(", right: ");
+      Enes100.println(rightSpeed);
+      setMotorSpeed(leftSpeed, rightSpeed);
     }
   }
 }
@@ -160,7 +163,7 @@ void avoidObstacle() {
   Enes100.println("Avoiding Obstacle!");
   bool flag = false;
   updateEverything();
-  float newY = 0;
+  double newY = 0;
   if (locY > 1.333) {
     orient(-3.14 / 2.0);
     updateEverything();
@@ -191,29 +194,31 @@ void avoidObstacle() {
 }
 
 // Points robot towards specified angle.
-// float t - An angle in radians
-void orient(float t) {
+// double t - An angle in radians
+void orient(double t) {
   t += 1;
   Enes100.print("Orienting to ");
   Enes100.println(t);
   bool flag = false;
   while (!flag) {
     updateEverything();
-    float theta = locT;
-    float error = theta - t;
+    double theta = locT;
+    double error = theta - t;
     if (abs(error) < .01) {
       Enes100.println("Oriented");
       flag = true;
-      setSpeed(0, 0);
+      setMotorSpeed(0, 0);
     } else {
-      float output = abs(error) * ORIENT_kP + MIN_SPEED_TURN;
+      double output = abs(error) * ORIENT_kP + MIN_SPEED_TURN;
       if (output > 255) {
         output = 255;
       }
+      Enes100.print("output: ");
+      Enes100.println(output);
       if (error > 0) {
-        setSpeed(output, -output);
+        setMotorSpeed((int)output, (int)-output);
       } else {
-        setSpeed(-output, output);
+        setMotorSpeed((int)-output, (int)output);
       }
     }
   }
@@ -223,7 +228,7 @@ void orient(float t) {
 void loop() {}
 
 // Returns ultrasonic distance
-float getUltraDistance(int trig, int echo) {
+double getUltraDistance(int trig, int echo) {
   digitalWrite(trig, LOW);
   delayMicroseconds(2);
   digitalWrite(trig, HIGH);
@@ -239,7 +244,7 @@ bool obstacle() {
 
 // Sets drive motors speeds
 // -255<=speed<=255
-void setSpeed(int left, int right) {
+void setMotorSpeed(int left, int right) {
   if (left < 0) {
     frontLeftMotor->run(BACKWARD);
     backLeftMotor->run(BACKWARD);
@@ -255,13 +260,13 @@ void setSpeed(int left, int right) {
     backRightMotor->run(FORWARD);
   }
 
-  backRightMotor->setSpeed(abs(right) * SPEED_MULTIPLIER);
-  frontRightMotor->setSpeed(abs(right) * SPEED_MULTIPLIER);
-  frontLeftMotor->setSpeed(abs(left) * SPEED_MULTIPLIER);
-  backLeftMotor->setSpeed(abs(left) * SPEED_MULTIPLIER);
+  backRightMotor->setSpeed(abs(right));
+  frontRightMotor->setSpeed(abs(right));
+  frontLeftMotor->setSpeed(abs(left));
+  backLeftMotor->setSpeed(abs(left));
 }
 
-float getWeight() {
+double getWeight() {
   return scale.get_units();
 }
 
@@ -272,8 +277,8 @@ void printStats() {
   Enes100.print(locY);
   Enes100.print(", ");
   Enes100.println(locT);
-  Enes100.print("Sensors: ");
-  Enes100.print(getWeight());
-  Enes100.print("    ");
-  Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
+  // Enes100.print("Sensors: ");
+  // Enes100.print(getWeight());
+  // Enes100.print("    ");
+  // Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
 }

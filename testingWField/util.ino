@@ -1,15 +1,15 @@
 // Gives the angle relative to the horizontal from OSV to target.
-float angleTo(float x, float y) {
-  float delX = x - locX;
-  float delY = y - locY;
-  float angle = atan2(delY, delX);
+double angleTo(double x, double y) {
+  double delX = x - locX;
+  double delY = y - locY;
+  double angle = atan2(delY, delX);
   return angle;
 }
 
 // This function computes the distance from the OSV to the coordinate passed in
-float distanceTo(float x, float y) {
-  float delX = locX - x;
-  float delY = locY - y;
+double distanceTo(double x, double y) {
+  double delX = locX - x;
+  double delY = locY - y;
   return sqrt(sq(delX) + sq(delY));
 }
 
