@@ -166,7 +166,9 @@ void printStats() {
   print("Location: ");
   print(getX());
   print(", ");
-  println(getY());
+  print(getY());
+  print(", ");
+  println(getTheta());
   print("Destination: ");
   print(desX);
   print(", ");

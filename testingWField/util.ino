@@ -32,5 +32,5 @@ float getTheta() {
 void updateEverything() {
   updateLocation();
   printStats();
-  scale.set_scale(calibration_factor);
+  // scale.set_scale(calibration_factor);
 }

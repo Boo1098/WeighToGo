@@ -2,7 +2,7 @@
 #include <Enes100.h>
 #include <Wire.h>
 #include <math.h>
-#include "HX711.h"
+// #include "HX711.h"
 
 // Setup Constants
 #define MIN_SPEED_TURN 50.0
@@ -17,7 +17,6 @@
 #define TRIG_PIN 12
 // Echo pin of ultrasonic sensor
 #define ECHO_PIN 11
-
 // Load cell pins
 #define DOUT 3
 #define CLK 2
@@ -28,8 +27,8 @@
 #define locX Enes100.location.x
 #define locY Enes100.location.y
 #define locT Enes100.location.theta
-#define print Enes100.print
-#define println Enes100.println
+// #define Eprint Enes100.print
+// #define Eprintln Enes100.println
 #define updateLocation Enes100.updateLocation
 
 // Create the motor shield object with the default I2C address
@@ -41,29 +40,29 @@ Adafruit_DCMotor *frontRightMotor = AFMS.getMotor(2);
 Adafruit_DCMotor *frontLeftMotor = AFMS.getMotor(3);
 Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 
-HX711 scale;
+// HX711 scale;
 
 float calibration_factor = -242;
 
 void setup() {
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
   while (!Enes100.begin("Weigh to go", DEBRIS, 5, 9, 10)) {
-    //println("Waiting for Connection.");
+    //Eprintln("Waiting for Connection.");
   }
-  println("Connected!");
+  Enes100.println("Connected!");
 
-  scale.begin(DOUT, CLK);
-  scale.set_scale();
-  scale.tare();  //Reset the scale to 0
+  // scale.begin(DOUT, CLK);
+  // scale.set_scale();
+  // scale.tare();  //Reset the scale to 0
 
   // long zero_factor = scale.read_average();
 
-  // Print out destination location
-  print("Destination is at (");
-  print(desX);
-  print(", ");
-  print(desY);
-  println(")");
+  // Eprint out destination location
+  Enes100.print("Destination is at (");
+  Enes100.print(desX);
+  Enes100.print(", ");
+  Enes100.print(desY);
+  Enes100.println(")");
 
   // Set pin modes of ultrasonic sensor
   pinMode(TRIG_PIN, OUTPUT);
@@ -97,15 +96,15 @@ void setup() {
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
 void driveFar(float x, float y, bool obsCheck) {
-  print("Driving to ");
-  print(x);
-  print(", ");
-  println(y);
+  Enes100.print("Driving to ");
+  Enes100.print(x);
+  Enes100.print(", ");
+  Enes100.println(y);
   bool flag = false;
   while (!flag) {
     updateEverything();
     if (obstacle() && obsCheck) {
-      println("Obstacle Found!");
+      Enes100.println("Obstacle Found!");
       flag = true;
       avoidObstacle();
     } else {
@@ -137,7 +136,7 @@ void driveFar(float x, float y, bool obsCheck) {
 
 // Drives robot around an obstacle
 void avoidObstacle() {
-  println("Avoiding Obstacle!");
+  Enes100.println("Avoiding Obstacle!");
   bool flag = false;
   updateEverything();
   float newY = 0;
@@ -173,8 +172,8 @@ void avoidObstacle() {
 // Points robot towards specified angle.
 // float t - An angle in radians
 void orient(float t) {
-  print("Orienting to ");
-  println(t);
+  Enes100.print("Orienting to ");
+  Enes100.println(t);
   bool flag = false;
   while (!flag) {
     updateEverything();
@@ -239,19 +238,21 @@ void setSpeed(int left, int right) {
   backLeftMotor->setSpeed(abs(left) * SPEED_MULTIPLIER);
 }
 
-float getWeight() {
-  return scale.get_units();
-}
+// float getWeight() {
+//   return scale.get_units();
+// }
 
 void printStats() {
-  print("Location: ");
-  print(getX());
-  print(", ");
-  println(getY());
-  print("Destination: ");
-  print(desX);
-  print(", ");
-  print(desY);
-  print(" ");
-  println(millis);
+  Enes100.print("Location: ");
+  Enes100.print(getX());
+  Enes100.print(", ");
+  Enes100.print(getY());
+  Enes100.print(", ");
+  Enes100.println(getTheta());
+  Enes100.print("Destination: ");
+  Enes100.print(desX);
+  Enes100.print(", ");
+  Enes100.print(desY);
+  Enes100.print(" ");
+  Enes100.println(millis);
 }
