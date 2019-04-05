@@ -4,5 +4,8 @@
     "editor.formatOnPaste": true,
     "editor.tabSize": 2,
     "editor.detectIndentation": false,
-    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 2, ColumnLimit: 0}"
+    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 2, ColumnLimit: 0}",
+    "files.associations": {
+      "cmath": "cpp"
+    }
 }

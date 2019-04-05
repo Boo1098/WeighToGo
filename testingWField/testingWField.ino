@@ -130,7 +130,7 @@ void driveFar(double x, double y, bool obsCheck) {
     } else {
       double leftSpeed = 255;
       double rightSpeed = 255;
-      double theta = (locT - angleTo(x, y));
+      double theta = locT - angleTo(x, y);
       if (abs(theta) > 0.01) {
         if (theta > 0) {
           rightSpeed -= abs(DRIVE_FAR_kP * theta);
