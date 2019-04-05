@@ -258,5 +258,5 @@ void printStats() {
   Enes100.print("Sensors: ");
   Enes100.print(getWeight());
   Enes100.print("    ");
-  Enes100.print(getUltraDistance());
+  Enes100.print(getUltraDistance(TRIG_PIN, ECHO_PIN));
 }
