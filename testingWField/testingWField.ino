@@ -131,6 +131,8 @@ void driveFar(double x, double y, bool obsCheck) {
       double leftSpeed = 255;
       double rightSpeed = 255;
       double theta = locT - angleTo(x, y);
+      Enes100.print("error: ");
+      Enes100.println(theta);
       if (abs(theta) > 0.01) {
         if (theta > 0) {
           rightSpeed -= abs(DRIVE_FAR_kP * theta);
@@ -204,6 +206,8 @@ void orient(double t) {
     updateEverything();
     double theta = locT;
     double error = theta - t;
+    Enes100.print("error: ");
+    Enes100.println(error);
     if (abs(error) < .01) {
       Enes100.println("Oriented");
       flag = true;
