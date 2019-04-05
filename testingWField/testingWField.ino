@@ -5,7 +5,7 @@
 #include "HX711.h"
 
 // Setup Constants
-#define MIN_SPEED_TURN 50.0
+#define MIN_SPEED_TURN 70.0
 #define OBSTACLE_TRIGGER_DISTANCE 0.1
 #define DESTINATION_BUFFER_DISTANCE 0.3
 #define MAX_SPEED 255.0
