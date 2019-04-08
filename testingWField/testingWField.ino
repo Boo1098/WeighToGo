@@ -12,6 +12,8 @@
 #define MAX_SPEED 255.0
 #define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
+
+// Amount of time in ms that each loop waits
 #define LOOP_WAIT 100
 
 // Trigger pin of ultrasonic sensor
@@ -48,12 +50,10 @@ float calibration_factor = -242;
 void setup() {
   // // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
   delay(5000);
+
   while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
-  // delay(500);
-
-  // Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6);
 
   delay(500);
 
@@ -79,31 +79,10 @@ void setup() {
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
 
-  // Start Navigation Code
-  //delay(5000);
-  // while (true) {
-  //   updateEverything();
-  //   delay(1000);
-  // }
-
-  //delay(10000);
-
   long start = millis();
   while (millis() - start < 2500) {
     updateEverything();
   }
-
-  // orient(3.14 / 2);
-
-  //driveFar(3.5, locY, false);
-  // setMotorSpeed(100, 100);
-  // delay(5000);
-  // setMotorSpeed(25, 25);
-  // delay(5000);
-  // setMotorSpeed(10, -10);
-  // delay(5000);
-
-  // driveFar(2, locY, false);
 
   // Orient robot towards target.
   startUp();
@@ -178,11 +157,11 @@ void startUp() {
   Enes100.println("Initiating Launch Sequence.");
   updateEverything();
   if (locY < 0.66) {
-    driveFar(locX, 0.33);
+    driveFar(locX + 0.1, 0.33);
   } else if (locY < 1.33) {
-    driveFar(locX, 1);
+    driveFar(locX + 0.1, 1);
   } else {
-    driveFar(locX, 1.66);
+    driveFar(locX + 0.1, 1.66);
   }
   orient(0);
 }
