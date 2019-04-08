@@ -3,14 +3,16 @@
 #include <Wire.h>
 #include <math.h>
 #include "HX711.h"
+#include "utility/Adafruit_MS_PWMServoDriver.h"
 
 // Setup Constants
-#define MIN_SPEED_TURN 70.0
-#define OBSTACLE_TRIGGER_DISTANCE 15.0
-#define DESTINATION_BUFFER_DISTANCE 0.3
+#define MIN_SPEED_TURN 60.0
+#define OBSTACLE_TRIGGER_DISTANCE 30.0
+#define DESTINATION_BUFFER_DISTANCE 0.1
 #define MAX_SPEED 255.0
-#define DRIVE_FAR_kP 255.0 * 15.0 / 3.14
+#define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
+#define LOOP_WAIT 100
 
 // Trigger pin of ultrasonic sensor
 #define TRIG_PIN 12
@@ -44,10 +46,14 @@ HX711 scale;
 float calibration_factor = -242;
 
 void setup() {
-  // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
+  // // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
+  delay(5000);
   while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
-    //Eprintln("Waiting for Connection.");
+    // Eprintln("Waiting for Connection.");
   }
+  // delay(500);
+
+  // Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6);
 
   delay(500);
 
@@ -83,13 +89,13 @@ void setup() {
   //delay(10000);
 
   long start = millis();
-  while (millis() - start < 10000) {
+  while (millis() - start < 2500) {
     updateEverything();
   }
 
-  //orient(3.14 / 2);
+  // orient(3.14 / 2);
 
-  driveFar(3.5, locY, false);
+  //driveFar(3.5, locY, false);
   // setMotorSpeed(100, 100);
   // delay(5000);
   // setMotorSpeed(25, 25);
@@ -100,18 +106,21 @@ void setup() {
   // driveFar(2, locY, false);
 
   // Orient robot towards target.
-  // avoidObstacle();
+  //avoidObstacle();
+  orient(0);
 
   // // Drive to the target close enough.
-  // driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
+  driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
 
   // // Point towards final target.
-  // orient(angleTo(desX, desY));
+  orient(angleTo(desX, desY));
 
   // // Drive up close.
-  // float dist = distanceTo(desX, desY);
-  // driveFar(locX + (desX - locX) * DESTINATION_BUFFER_DISTANCE / dist,
-  //          locY + (desY - locY) * DESTINATION_BUFFER_DISTANCE / dist);
+  float dist = distanceTo(desX, desY);
+  if (dist > DESTINATION_BUFFER_DISTANCE) {
+    driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
+             locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
+  }
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -132,8 +141,13 @@ void driveFar(double x, double y, bool obsCheck) {
       double rightSpeed = 255;
       double theta = locT - angleTo(x, y);
       Enes100.print("error: ");
-      Enes100.println(theta);
-      if (abs(theta) > 0.01) {
+      double atheta = theta;
+      if (atheta < 0) {
+        atheta *= -1.0;
+      }
+      Enes100.println(atheta);
+
+      if (atheta > 0.01) {
         if (theta > 0) {
           rightSpeed -= abs(DRIVE_FAR_kP * theta);
           if (rightSpeed < -255) {
@@ -157,6 +171,7 @@ void driveFar(double x, double y, bool obsCheck) {
       Enes100.println(rightSpeed);
       setMotorSpeed(leftSpeed, rightSpeed);
     }
+    delay(LOOP_WAIT);
   }
 }
 
@@ -198,7 +213,7 @@ void avoidObstacle() {
 // Points robot towards specified angle.
 // double t - An angle in radians
 void orient(double t) {
-  t += 1;
+  // t += 1;
   Enes100.print("Orienting to ");
   Enes100.println(t);
   bool flag = false;
@@ -208,7 +223,7 @@ void orient(double t) {
     double error = theta - t;
     Enes100.print("error: ");
     Enes100.println(error);
-    if (abs(error) < .01) {
+    if (error < 0.01 && error > -0.01) {
       Enes100.println("Oriented");
       flag = true;
       setMotorSpeed(0, 0);
@@ -225,6 +240,7 @@ void orient(double t) {
         setMotorSpeed((int)-output, (int)output);
       }
     }
+    delay(LOOP_WAIT);
   }
 }
 
@@ -281,8 +297,8 @@ void printStats() {
   Enes100.print(locY);
   Enes100.print(", ");
   Enes100.println(locT);
-  // Enes100.print("Sensors: ");
+  Enes100.print("Sensors: ");
   // Enes100.print(getWeight());
   // Enes100.print("    ");
-  // Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
+  Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
 }
