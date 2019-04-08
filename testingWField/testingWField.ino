@@ -119,6 +119,7 @@ void driveFar(double x, double y, bool obsCheck) {
       double rightSpeed = 255;
       double theta = locT - angleTo(x, y);
       Enes100.print("error: ");
+      // abs is evil.
       double atheta = theta;
       if (atheta < 0) {
         atheta *= -1.0;
@@ -139,6 +140,7 @@ void driveFar(double x, double y, bool obsCheck) {
         }
       }
       if (distanceTo(x, y) < .05) {
+        Enes100.println("Drived!");
         flag = true;
         leftSpeed = 0;
         rightSpeed = 0;
@@ -149,27 +151,34 @@ void driveFar(double x, double y, bool obsCheck) {
       Enes100.println(rightSpeed);
       setMotorSpeed(leftSpeed, rightSpeed);
     }
+    // Delay for reasons?
     delay(LOOP_WAIT);
   }
 }
 
+// Run first to get robot aligned to a column.
 void startUp() {
   Enes100.println("Initiating Launch Sequence.");
   updateEverything();
+
+  // Depending on column, drives to center of nearest.
   if (locY < 0.66) {
-    driveFar(locX + 0.1, 0.33);
+    driveFar(locX + 0.1, 0.33, false);
   } else if (locY < 1.33) {
-    driveFar(locX + 0.1, 1);
+    driveFar(locX + 0.1, 1, false);
   } else {
-    driveFar(locX + 0.1, 1.66);
+    driveFar(locX + 0.1, 1.66, false);
   }
+
+  // Orients self to get ready.
   orient(0);
+
+  Enes100.println("All systems go.");
 }
 
 // Drives robot around an obstacle
 void avoidObstacle() {
   Enes100.println("Avoiding Obstacle!");
-  bool flag = false;
   updateEverything();
   double newY = 0;
   if (locY > 1.333) {
@@ -198,13 +207,13 @@ void avoidObstacle() {
     driveFar(locX + .4, 1, true);
   }
   orient(0);
+  Enes100.println("Obstacle Avoided!");
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, newY, true);
 }
 
 // Points robot towards specified angle.
 // double t - An angle in radians
 void orient(double t) {
-  // t += 1;
   Enes100.print("Orienting to ");
   Enes100.println(t);
   bool flag = false;
@@ -214,8 +223,9 @@ void orient(double t) {
     double error = theta - t;
     Enes100.print("error: ");
     Enes100.println(error);
+    // abs is evil.
     if (error < 0.01 && error > -0.01) {
-      Enes100.println("Oriented");
+      Enes100.println("Oriented!");
       flag = true;
       setMotorSpeed(0, 0);
     } else {
@@ -240,6 +250,7 @@ void loop() {}
 
 // Returns ultrasonic distance
 double getUltraDistance(int trig, int echo) {
+  // magic
   digitalWrite(trig, LOW);
   delayMicroseconds(2);
   digitalWrite(trig, HIGH);
