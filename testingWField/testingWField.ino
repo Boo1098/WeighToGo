@@ -30,8 +30,6 @@
 #define locX Enes100.location.x
 #define locY Enes100.location.y
 #define locT Enes100.location.theta
-// #define Eprint Enes100.print
-// #define Eprintln Enes100.println
 #define updateLocation Enes100.updateLocation
 
 // Create the motor shield object with the default I2C address
@@ -48,24 +46,25 @@ HX711 scale;
 float calibration_factor = -242;
 
 void setup() {
-  // // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
   delay(5000);
 
+  // Wait for connection to vision system.
+  // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
   while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
 
+  // shrug?
   delay(500);
 
   Enes100.println("Connected!");
 
+  // Scale initilizaiton.
   scale.begin(DOUT, CLK);
   scale.set_scale();
   scale.tare();  //Reset the scale to 0
 
-  // long zero_factor = scale.read_average();
-
-  // Eprint out destination location
+  // print out destination location
   Enes100.print("Destination is at (");
   Enes100.print(desX);
   Enes100.print(", ");
@@ -79,21 +78,22 @@ void setup() {
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
 
+  // Prints location data for 2.5 seconds
   long start = millis();
   while (millis() - start < 2500) {
     updateEverything();
   }
 
-  // Orient robot towards target.
+  // Moves OSV to one of the three colunms.
   startUp();
 
-  // // Drive to the target close enough.
+  // Drive to the target close enough.
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
 
-  // // Point towards final target.
+  // Point towards final target.
   orient(angleTo(desX, desY));
 
-  // // Drive up close.
+  // Drive up close.
   float dist = distanceTo(desX, desY);
   if (dist > DESTINATION_BUFFER_DISTANCE) {
     driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
@@ -107,9 +107,13 @@ void driveFar(double x, double y, bool obsCheck) {
   Enes100.print(x);
   Enes100.print(", ");
   Enes100.println(y);
+
+  // Run a loop until interruption
   bool flag = false;
   while (!flag) {
     updateEverything();
+
+    // Check for obstacle.
     if (obsCheck && obstacle()) {
       Enes100.println("Obstacle Found!");
       flag = true;
@@ -118,12 +122,14 @@ void driveFar(double x, double y, bool obsCheck) {
       double leftSpeed = 255;
       double rightSpeed = 255;
       double theta = locT - angleTo(x, y);
-      Enes100.print("error: ");
       // abs is evil.
       double atheta = theta;
       if (atheta < 0) {
         atheta *= -1.0;
       }
+
+      // Prints error
+      Enes100.print("error: ");
       Enes100.println(atheta);
 
       if (atheta > 0.01) {
