@@ -123,7 +123,7 @@ void driveFar(double x, double y, bool obsCheck) {
   bool flag = false;
   while (!flag) {
     updateEverything();
-    if (obstacle() && obsCheck) {
+    if (obsCheck && obstacle()) {
       Enes100.println("Obstacle Found!");
       flag = true;
       avoidObstacle();
