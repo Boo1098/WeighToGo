@@ -106,8 +106,7 @@ void setup() {
   // driveFar(2, locY, false);
 
   // Orient robot towards target.
-  //avoidObstacle();
-  orient(0);
+  startUp();
 
   // // Drive to the target close enough.
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
@@ -173,6 +172,19 @@ void driveFar(double x, double y, bool obsCheck) {
     }
     delay(LOOP_WAIT);
   }
+}
+
+void startUp() {
+  Enes100.println("Initiating Launch Sequence.");
+  updateEverything();
+  if (locY < 0.66) {
+    driveFar(locX, 0.33);
+  } else if (locY < 1.33) {
+    driveFar(locX, 1);
+  } else {
+    driveFar(locX, 1.66);
+  }
+  orient(0);
 }
 
 // Drives robot around an obstacle
