@@ -9,19 +9,19 @@
 * Setup Constants
 */
 // Minimum speed required to turn
-#define MIN_SPEED_TURN 60.0
+#define MIN_SPEED_TURN 45.0
 // Distance in centimeters that triggers obstacle
-#define OBSTACLE_TRIGGER_DISTANCE 30.0
+#define OBSTACLE_TRIGGER_DISTANCE 20.0
 // Distance we want the far navigation to end up from the mission site
 #define DESTINATION_BUFFER_DISTANCE 0.1
 // Max speed of OSV. Not currently implemented
 #define MAX_SPEED 255.0
 // Minimum speed OSV requires to move forwards
-#define MIN_SPEED 50.0
+#define MIN_SPEED 40.0
 // Proportional factor for driveFar corrections
 #define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
 // Proportional factor for orient corrections
-#define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
+#define ORIENT_kP (255.0 - MIN_SPEED_TURN) * 3.0 / 3.14
 
 // Amount of time in ms that each loop waits
 #define LOOP_WAIT 100
@@ -59,16 +59,17 @@ HX711 scale;
 float calibration_factor = -242;
 
 void setup() {
+  delay(500);
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 6, 7)) {
     // Eprintln("Waiting for Connection.");
   }
-  setMotorSpeed(-255, 255);
-  delay(2000);
-  setMotorSpeed(255, -255);
-  delay(2000);
-  setMotorSpeed(0, 0);
+  // setMotorSpeed(-255, 255);
+  // delay(2000);
+  // setMotorSpeed(255, -255);
+  // delay(2000);
+  // setMotorSpeed(0, 0);
   // shrug?
   delay(500);
 
@@ -100,7 +101,8 @@ void setup() {
   }
 
   // Moves OSV to one of the three colunms.
-  startUp();
+  // startUp();
+  orient(0);
 
   // Drive to the target close enough.
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
@@ -197,17 +199,16 @@ void startUp() {
   updateEverything();
 
   // Depending on column, drives to center of nearest.
-  if (locY - 0.333)
-    if (locY < 0.66) {
-      orient(locY < 0.33 ? 1.57 : -1.57);
-      driveFar(locX, 0.33, false);
-    } else if (locY < 1.33) {
-      orient(locY < 1.0 ? 1.57 : -1.57);
-      driveFar(locX, 1, false);
-    } else {
-      orient(locY < 1.66 ? 1.57 : -1.57);
-      driveFar(locX, 1.66, false);
-    }
+  if (locY < 0.66) {
+    orient(locY < 0.33 ? 1.57 : -1.57);
+    driveFar(locX, 0.33, false);
+  } else if (locY < 1.33) {
+    orient(locY < 1.0 ? 1.57 : -1.57);
+    driveFar(locX, 1, false);
+  } else {
+    orient(locY < 1.66 ? 1.57 : -1.57);
+    driveFar(locX, 1.66, false);
+  }
 
   // Orients self to get ready.
   orient(0);
@@ -220,41 +221,10 @@ void avoidObstacle() {
   Enes100.println("Avoiding Obstacle!");
   updateEverything();
 
-  // double newY = 0;
-  // Finds what lane the OSV is closest to and goes around obstacle accordingly.
-  // All numbers found by magic.
-  // if (locY > 1.333) {
-  //   orient(-3.14 / 2.0);
-  //   updateEverything();
-  //   newY = 1;
-  //   driveFar(locX, 1 + 0.333, false);
-  //   driveFar(locX + .4, 1, false);
-  // } else if (locY > 1) {
-  //   orient(3.14 / 2.0);
-  //   updateEverything();
-  //   newY = 1.666;
-  //   driveFar(locX, 1.666 - 0.333, false);
-  //   driveFar(locX + .4, 1.666, false);
-  // } else if (locY > 0.666) {
-  //   orient(-3.14 / 2.0);
-  //   updateEverything();
-  //   newY = 0.333;
-  //   driveFar(locX, 0.333 + 0.333, false);
-  //   driveFar(locX + .4, 0.333, false);
-  // } else {
-  //   orient(3.14 / 2.0);
-  //   updateEverything();
-  //   newY = 1;
-  //   driveFar(locX, 1 - 0.333, false);
-  //   driveFar(locX + .4, 1, false);
-  // }
-
   // Why write many line when few line do trick?
   double newY = locY > 1.333 || locY < 0.666 ? 1 : locY > 1 ? 1.666 : 0.333;
-  double middleY = locY > 1 ? 1.333 : 0.666;
   orient(locY > 1.333 || (locY < 1 && locY > 0.666) ? -1.57 : 1.57);
-  driveFar(locX, middleY, false);
-  driveFar(locX + 0.4, newY, false);
+  driveFar(locX, newY, false);
 
   // Re-orient forwards.
   orient(0);
@@ -352,7 +322,7 @@ void setMotorSpeed(int left, int right) {
 
 // Returns weight measured by load cell.
 double getWeight() {
-  return scale.get_units();
+  return scale.get_units(40), 1;
 }
 
 // Print out stats every time updateEverything is ran.
@@ -364,7 +334,7 @@ void printStats() {
   Enes100.print(", ");
   Enes100.println(locT);
   Enes100.print("Sensors: ");
-  // Enes100.print(getWeight());
-  // Enes100.print("    ");
+  Enes100.print(getWeight());
+  Enes100.print("    ");
   Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
 }
