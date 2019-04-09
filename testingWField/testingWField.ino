@@ -326,20 +326,11 @@ bool obstacle() {
 // -255<=speed<=255
 void setMotorSpeed(int left, int right) {
   // Spin motors in correct direction.
-  if (left < 0) {
-    frontLeftMotor->run(BACKWARD);
-    backLeftMotor->run(BACKWARD);
-  } else {
-    frontLeftMotor->run(FORWARD);
-    backLeftMotor->run(FORWARD);
-  }
-  if (right < 0) {
-    frontRightMotor->run(BACKWARD);
-    backRightMotor->run(BACKWARD);
-  } else {
-    frontRightMotor->run(FORWARD);
-    backRightMotor->run(FORWARD);
-  }
+  // ternary operators are cool. looks like magic
+  frontLeftMotor->run(left < 0 ? BACKWARD : FORWARD);
+  backLeftMotor->run(left < 0 ? BACKWARD : FORWARD);
+  frontRightMotor->run(right < 0 ? BACKWARD : FORWARD);
+  backRightMotor->run(right < 0 ? BACKWARD : FORWARD);
 
   // Set power of motors. (must be positive)
   backRightMotor->setSpeed(abs(right));
