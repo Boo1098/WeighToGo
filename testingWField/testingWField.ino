@@ -220,31 +220,38 @@ void avoidObstacle() {
   double newY = 0;
   // Finds what lane the OSV is closest to and goes around obstacle accordingly.
   // All numbers found by magic.
-  if (locY > 1.333) {
-    orient(-3.14 / 2.0);
-    updateEverything();
-    newY = 1;
-    driveFar(locX, 1 + 0.333, false);
-    driveFar(locX + .4, 1, false);
-  } else if (locY > 1) {
-    orient(3.14 / 2.0);
-    updateEverything();
-    newY = 1.666;
-    driveFar(locX, 1.666 - 0.333, false);
-    driveFar(locX + .4, 1.666, false);
-  } else if (locY > 0.666) {
-    orient(-3.14 / 2.0);
-    updateEverything();
-    newY = 0.333;
-    driveFar(locX, 0.333 + 0.333, false);
-    driveFar(locX + .4, 0.333, false);
-  } else {
-    orient(3.14 / 2.0);
-    updateEverything();
-    newY = 1;
-    driveFar(locX, 1 - 0.333, false);
-    driveFar(locX + .4, 1, false);
-  }
+  // if (locY > 1.333) {
+  //   orient(-3.14 / 2.0);
+  //   updateEverything();
+  //   newY = 1;
+  //   driveFar(locX, 1 + 0.333, false);
+  //   driveFar(locX + .4, 1, false);
+  // } else if (locY > 1) {
+  //   orient(3.14 / 2.0);
+  //   updateEverything();
+  //   newY = 1.666;
+  //   driveFar(locX, 1.666 - 0.333, false);
+  //   driveFar(locX + .4, 1.666, false);
+  // } else if (locY > 0.666) {
+  //   orient(-3.14 / 2.0);
+  //   updateEverything();
+  //   newY = 0.333;
+  //   driveFar(locX, 0.333 + 0.333, false);
+  //   driveFar(locX + .4, 0.333, false);
+  // } else {
+  //   orient(3.14 / 2.0);
+  //   updateEverything();
+  //   newY = 1;
+  //   driveFar(locX, 1 - 0.333, false);
+  //   driveFar(locX + .4, 1, false);
+  // }
+
+  // Why write many line when few line do trick?
+  orient((locY > 1.333 || (locY < 1 && locY > 0.666)) ? -1.57 : 1.57);
+  updateEverything();
+  newY = locY > 1.333 ? 1 : (locY > 1 ? 1.666 : (locY > 0.666 ? 0.333 : 1));
+  driveFar(locX, (locY > 1 ? 1.333 : 0.666), false);
+  driveFar(locX + 0.4, newY, false);
 
   // Re-orient forwards.
   orient(0);
