@@ -10,6 +10,7 @@
 #define OBSTACLE_TRIGGER_DISTANCE 30.0
 #define DESTINATION_BUFFER_DISTANCE 0.1
 #define MAX_SPEED 255.0
+#define MIN_SPEED 50.0
 #define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
 
@@ -126,6 +127,13 @@ void driveFar(double x, double y, bool obsCheck) {
       double atheta = theta;
       if (atheta < 0) {
         atheta *= -1.0;
+      }
+
+      // Robot slows down as it gets closer to obstacle.
+      double dist = getUltraDistance(TRIG_PIN, ECHO_PIN);
+      if (obsCheck && dist < 60.0) {
+        leftSpeed -= ((60.0 - dist) / 60.0) * (255.0 - MIN_SPEED);
+        rightSpeed -= ((60.0 - dist) / 60.0) * (255.0 - MIN_SPEED);
       }
 
       // Prints error
