@@ -43,8 +43,10 @@ void setup() {
 
   // Drive up close.
   float dist = distanceTo(desX, desY);
-  driveFar(getX() + (desX - getX()) * DESTINATION_BUFFER_DISTANCE / dist,
-           getY() + (desY - getY()) * DESTINATION_BUFFER_DISTANCE / dist, false);
+  if (dist > DESTINATION_BUFFER_DISTANCE) {
+    driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
+             locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
+  }
 }
 
 void loop() {}
