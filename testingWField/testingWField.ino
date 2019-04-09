@@ -196,11 +196,14 @@ void startUp() {
 
   // Depending on column, drives to center of nearest.
   if (locY < 0.66) {
-    driveFar(locX + 0.1, 0.33, false);
+    orient(locY < 0.33 ? 1.57 : -1.57);
+    driveFar(locX, 0.33, false);
   } else if (locY < 1.33) {
-    driveFar(locX + 0.1, 1, false);
+    orient(locY < 1.0 ? 1.57 : -1.57);
+    driveFar(locX, 1, false);
   } else {
-    driveFar(locX + 0.1, 1.66, false);
+    orient(locY < 1.66 ? 1.57 : -1.57);
+    driveFar(locX, 1.66, false);
   }
 
   // Orients self to get ready.
