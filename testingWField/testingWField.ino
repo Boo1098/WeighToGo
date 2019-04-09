@@ -217,7 +217,7 @@ void avoidObstacle() {
   Enes100.println("Avoiding Obstacle!");
   updateEverything();
 
-  double newY = 0;
+  // double newY = 0;
   // Finds what lane the OSV is closest to and goes around obstacle accordingly.
   // All numbers found by magic.
   // if (locY > 1.333) {
@@ -247,7 +247,7 @@ void avoidObstacle() {
   // }
 
   // Why write many line when few line do trick?
-  newY = (locY > 1.333 || locY < 0.333) ? 1 : (locY > 1 ? 1.666 : 0.333);
+  double newY = (locY > 1.333 || locY < 0.333) ? 1 : (locY > 1 ? 1.666 : 0.333);
   double middleY = locY > 1 ? 1.333 : 0.666;
   orient((locY > 1.333 || (locY < 1 && locY > 0.666)) ? -1.57 : 1.57);
   driveFar(locX, middleY, false);
@@ -255,6 +255,7 @@ void avoidObstacle() {
 
   // Re-orient forwards.
   orient(0);
+
   Enes100.println("Obstacle Avoided!");
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, newY, true);
 }
