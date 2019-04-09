@@ -3,10 +3,11 @@
 #include "TankSimulation.h"
 
 #define MIN_SPEED_TURN 50.0
-#define OBSTACLE_TRIGGER_DISTANCE 0.125
+#define OBSTACLE_TRIGGER_DISTANCE 0.1
 #define DESTINATION_BUFFER_DISTANCE 0.3
 #define DRIVE_FAR_kP 255.0 * 15.0 / 3.14
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
+#define MIN_SPEED 50
 
 // I'm lazy
 #define Enes100 Enes100Simulation
@@ -18,6 +19,7 @@
 // #define print Enes100.print
 // #define println Enes100.println
 #define updateLocation Enes100.updateLocation
+#define myAbs(x) x < 0 ? -x : x
 
 void setup() {
   TankSimulation.begin();
@@ -33,7 +35,7 @@ void setup() {
   printStats();
 
   // Orient robot towards target.
-  avoidObstacle();
+  startUp();
 
   // Drive to the target close enough.
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, getY(), true);
@@ -57,10 +59,13 @@ void driveFar(double x, double y, bool obsCheck) {
   Enes100.print(x);
   Enes100.print(", ");
   Enes100.println(y);
+  // Run a loop until interruption
   bool flag = false;
   while (!flag) {
     updateEverything();
-    if (obstacle() && obsCheck) {
+
+    // Check for obstacle.
+    if (obsCheck && obstacle()) {
       Enes100.println("Obstacle Found!");
       flag = true;
       avoidObstacle();
@@ -68,9 +73,26 @@ void driveFar(double x, double y, bool obsCheck) {
       double leftSpeed = 255;
       double rightSpeed = 255;
       double theta = locT - angleTo(x, y);
-      // Enes100.print("error: ");
-      // Enes100.println(theta);
-      if (abs(theta) > 0.01) {
+      // abs is evil.
+      double atheta = theta;
+      if (atheta < 0) {
+        atheta *= -1.0;
+      }
+
+      // Robot slows down as it gets closer to obstacle.
+      double dist = getUltraDistance() * 100.0;
+      if (obsCheck && dist < 60.0) {
+        leftSpeed -= ((60.0 - dist) / 60.0) * (255.0 - MIN_SPEED);
+        rightSpeed -= ((60.0 - dist) / 60.0) * (255.0 - MIN_SPEED);
+      }
+
+      // Prints error
+      Enes100.print("error: ");
+      Enes100.println(atheta);
+
+      // Checks there is enough error to correct for.
+      if (atheta > 0.01) {
+        // Corrects in the correct direction.
         if (theta > 0) {
           rightSpeed -= abs(DRIVE_FAR_kP * theta);
           if (rightSpeed < -255) {
@@ -83,17 +105,25 @@ void driveFar(double x, double y, bool obsCheck) {
           }
         }
       }
+
+      // Checks if destination has been reached.
       if (distanceTo(x, y) < .05) {
+        Enes100.println("Drived!");
         flag = true;
         leftSpeed = 0;
         rightSpeed = 0;
       }
-      // Enes100.print("left: ");
-      // Enes100.print(leftSpeed);
-      // Enes100.print(", right: ");
-      // Enes100.println(rightSpeed);
+
+      // Print speeds
+      Enes100.print("left: ");
+      Enes100.print(leftSpeed);
+      Enes100.print(", right: ");
+      Enes100.println(rightSpeed);
       setMotorSpeed(leftSpeed, rightSpeed);
     }
+
+    // Delay for reasons?
+    // delay(0);
   }
 }
 
@@ -140,6 +170,31 @@ void orient(double t) {
       }
     }
   }
+}
+
+// Run first to get robot aligned to a column.
+void startUp() {
+  Enes100.println("Initiating Launch Sequence.");
+  updateEverything();
+
+  // Depending on column, drives to center of nearest.
+  if (myAbs((locY - 0.333)) < .1 || myAbs((locY - 1)) < .1 || myAbs((locY - 1.666)) < .1) {
+    if (locY < 0.66) {
+      orient(locY < 0.33 ? 1.57 : -1.57);
+      driveFar(locX, 0.33, false);
+    } else if (locY < 1.33) {
+      orient(locY < 1.0 ? 1.57 : -1.57);
+      driveFar(locX, 1, false);
+    } else {
+      orient(locY < 1.66 ? 1.57 : -1.57);
+      driveFar(locX, 1.66, false);
+    }
+  }
+
+  // Orients self to get ready.
+  orient(0);
+
+  Enes100.println("All systems go.");
 }
 
 // Returns true if there is an obstacle detected.
