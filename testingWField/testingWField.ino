@@ -5,13 +5,22 @@
 #include "HX711.h"
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
-// Setup Constants
+/*
+* Setup Constants
+*/
+// Minimum speed required to turn
 #define MIN_SPEED_TURN 60.0
+// Distance in centimeters that triggers obstacle
 #define OBSTACLE_TRIGGER_DISTANCE 30.0
+// Distance we want the far navigation to end up from the mission site
 #define DESTINATION_BUFFER_DISTANCE 0.1
+// Max speed of OSV. Not currently implemented
 #define MAX_SPEED 255.0
+// Minimum speed OSV requires to move forwards
 #define MIN_SPEED 50.0
+// Proportional factor for driveFar corrections
 #define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
+// Proportional factor for orient corrections
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
 
 // Amount of time in ms that each loop waits
@@ -21,6 +30,7 @@
 #define TRIG_PIN 12
 // Echo pin of ultrasonic sensor
 #define ECHO_PIN 11
+
 // Load cell pins
 #define DOUT 3
 #define CLK 2
@@ -42,8 +52,10 @@ Adafruit_DCMotor *frontRightMotor = AFMS.getMotor(2);
 Adafruit_DCMotor *frontLeftMotor = AFMS.getMotor(3);
 Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 
+// Create scale object
 HX711 scale;
 
+// Magic
 float calibration_factor = -242;
 
 void setup() {
