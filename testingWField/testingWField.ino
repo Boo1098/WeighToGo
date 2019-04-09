@@ -338,3 +338,45 @@ void printStats() {
   Enes100.print("    ");
   Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
 }
+
+void Near_Field_Nav() {
+  Fill_Array();
+  orient(find_min(Mat_Dist));
+  while(getUltraDistance>8){
+    setMotorSpeed(255,255);
+  }
+  while(getWeight<crit) {
+    // Drop Claw
+    // Lift Claw
+  }
+  //sendData(getWeight, getMagneto)
+}
+  
+
+void Fill_Array() {
+  Mat_Dist[15][2];
+  for(int i=0;i<5;i++) {   
+      orient(LocT+(.175));
+      Mat_Dist[i][0]=locT;
+      Mat_Dist[i][1]=getUltraDistance(TRIG_PIN,ECHO_PIN);
+  }
+  for(int i=5;i<15;i++) {   
+      orient(LocT-(.175));
+      Mat_Dist[i][0]=locT;
+      Mat_Dist[i][1]=getUltraDistance(TRIG_PIN,ECHO_PIN);
+  }
+}
+
+int find_min(int[][]) {
+  int min_val;
+  int min_loc;
+  for (int i=0;i<15;i++) {
+    if (Mat_Dist[i][1]<min_val) {
+      min_val=Mat_Dist[i][1];
+      min_loc=Mat_Dist[i][0];
+    }
+}
+
+
+
+  
