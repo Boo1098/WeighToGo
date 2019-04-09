@@ -66,8 +66,8 @@ void driveFar(double x, double y, bool obsCheck) {
       double leftSpeed = 255;
       double rightSpeed = 255;
       double theta = locT - angleTo(x, y);
-      Enes100.print("error: ");
-      Enes100.println(theta);
+      // Enes100.print("error: ");
+      // Enes100.println(theta);
       if (abs(theta) > 0.01) {
         if (theta > 0) {
           rightSpeed -= abs(DRIVE_FAR_kP * theta);
@@ -86,10 +86,10 @@ void driveFar(double x, double y, bool obsCheck) {
         leftSpeed = 0;
         rightSpeed = 0;
       }
-      Enes100.print("left: ");
-      Enes100.print(leftSpeed);
-      Enes100.print(", right: ");
-      Enes100.println(rightSpeed);
+      // Enes100.print("left: ");
+      // Enes100.print(leftSpeed);
+      // Enes100.print(", right: ");
+      // Enes100.println(rightSpeed);
       setMotorSpeed(leftSpeed, rightSpeed);
     }
   }
@@ -98,34 +98,12 @@ void driveFar(double x, double y, bool obsCheck) {
 // Drives robot around an obstacle
 void avoidObstacle() {
   Enes100.println("Avoiding Obstacle!");
-  bool flag = false;
-  updateEverything();
-  double newY = 0;
-  if (locY > 1.333) {
-    orient(-3.14 / 2.0);
-    updateEverything();
-    newY = 1;
-    driveFar(locX, 1 + 0.333, true);
-    driveFar(locX + .4, 1, true);
-  } else if (locY > 1) {
-    orient(3.14 / 2.0);
-    updateEverything();
-    newY = 1.666;
-    driveFar(locX, 1.666 - 0.333, true);
-    driveFar(locX + .4, 1.666, true);
-  } else if (locY > 0.666) {
-    orient(-3.14 / 2.0);
-    updateEverything();
-    newY = 0.333;
-    driveFar(locX, 0.333 + 0.333, true);
-    driveFar(locX + .4, 0.333, true);
-  } else {
-    orient(3.14 / 2.0);
-    updateEverything();
-    newY = 1;
-    driveFar(locX, 1 - 0.333, true);
-    driveFar(locX + .4, 1, true);
-  }
+  double newY = locY > 1.333 || locY < 0.666 ? 1 : locY > 1 ? 1.666 : 0.333;
+  double middleY = locY > 1 ? 1.333 : 0.666;
+  orient(locY > 1.333 || (locY < 1 && locY > 0.666) ? -1.57 : 1.57);
+  driveFar(locX, middleY, false);
+  driveFar(locX + 0.4, newY, false);
+  // Re-orient forwards.
   orient(0);
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, newY, true);
 }
@@ -140,8 +118,8 @@ void orient(double t) {
     updateEverything();
     double theta = locT;
     double error = theta - t;
-    Enes100.print("error: ");
-    Enes100.println(error);
+    // Enes100.print("error: ");
+    // Enes100.println(error);
     if (abs(error) < .01) {
       Enes100.println("Oriented");
       flag = true;
@@ -151,8 +129,8 @@ void orient(double t) {
       if (output > 255) {
         output = 255;
       }
-      Enes100.print("output: ");
-      Enes100.println(output);
+      // Enes100.print("output: ");
+      // Enes100.println(output);
       if (error > 0) {
         setMotorSpeed((int)output, (int)-output);
       } else {
