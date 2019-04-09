@@ -132,7 +132,9 @@ void driveFar(double x, double y, bool obsCheck) {
       Enes100.print("error: ");
       Enes100.println(atheta);
 
+      // Checks there is enough error to correct for.
       if (atheta > 0.01) {
+        // Corrects in the correct direction.
         if (theta > 0) {
           rightSpeed -= abs(DRIVE_FAR_kP * theta);
           if (rightSpeed < -255) {
@@ -145,18 +147,23 @@ void driveFar(double x, double y, bool obsCheck) {
           }
         }
       }
+
+      // Checks if destination has been reached.
       if (distanceTo(x, y) < .05) {
         Enes100.println("Drived!");
         flag = true;
         leftSpeed = 0;
         rightSpeed = 0;
       }
+
+      // Print speeds
       Enes100.print("left: ");
       Enes100.print(leftSpeed);
       Enes100.print(", right: ");
       Enes100.println(rightSpeed);
       setMotorSpeed(leftSpeed, rightSpeed);
     }
+
     // Delay for reasons?
     delay(LOOP_WAIT);
   }
@@ -186,7 +193,10 @@ void startUp() {
 void avoidObstacle() {
   Enes100.println("Avoiding Obstacle!");
   updateEverything();
+
   double newY = 0;
+  // Finds what lane the OSV is closest to and goes around obstacle accordingly.
+  // All numbers found by magic.
   if (locY > 1.333) {
     orient(-3.14 / 2.0);
     updateEverything();
@@ -212,6 +222,8 @@ void avoidObstacle() {
     driveFar(locX, 1 - 0.333, true);
     driveFar(locX + .4, 1, true);
   }
+
+  // Re-orient forwards.
   orient(0);
   Enes100.println("Obstacle Avoided!");
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, newY, true);
@@ -222,31 +234,48 @@ void avoidObstacle() {
 void orient(double t) {
   Enes100.print("Orienting to ");
   Enes100.println(t);
+
+  // Create loop to run until interruption.
   bool flag = false;
   while (!flag) {
     updateEverything();
+
+    // Calculate error.
     double theta = locT;
     double error = theta - t;
+
+    // Print error.
     Enes100.print("error: ");
     Enes100.println(error);
+
+    // Check if orientation is correct.
     // abs is evil.
     if (error < 0.01 && error > -0.01) {
       Enes100.println("Oriented!");
       flag = true;
       setMotorSpeed(0, 0);
     } else {
+      // Calculate speed to spin at based on error.
       double output = abs(error) * ORIENT_kP + MIN_SPEED_TURN;
+
+      // Limits output to max of 255
       if (output > 255) {
         output = 255;
       }
+
+      // Print output.
       Enes100.print("output: ");
       Enes100.println(output);
+
+      // Spins in correct direction.
       if (error > 0) {
         setMotorSpeed((int)output, (int)-output);
       } else {
         setMotorSpeed((int)-output, (int)output);
       }
     }
+
+    // Delay for reasons.
     delay(LOOP_WAIT);
   }
 }
@@ -273,6 +302,7 @@ bool obstacle() {
 // Sets drive motors speeds
 // -255<=speed<=255
 void setMotorSpeed(int left, int right) {
+  // Spin motors in correct direction.
   if (left < 0) {
     frontLeftMotor->run(BACKWARD);
     backLeftMotor->run(BACKWARD);
@@ -288,16 +318,19 @@ void setMotorSpeed(int left, int right) {
     backRightMotor->run(FORWARD);
   }
 
+  // Set power of motors. (must be positive)
   backRightMotor->setSpeed(abs(right));
   frontRightMotor->setSpeed(abs(right));
   frontLeftMotor->setSpeed(abs(left));
   backLeftMotor->setSpeed(abs(left));
 }
 
+// Returns weight measured by load cell.
 double getWeight() {
   return scale.get_units();
 }
 
+// Print out stats every time updateEverything is ran.
 void printStats() {
   Enes100.print("Location: ");
   Enes100.print(locX);
