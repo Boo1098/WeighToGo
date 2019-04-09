@@ -11,7 +11,7 @@
 // Minimum speed required to turn
 #define MIN_SPEED_TURN 60.0
 // Distance in centimeters that triggers obstacle
-#define OBSTACLE_TRIGGER_DISTANCE 30.0
+#define OBSTACLE_TRIGGER_DISTANCE 20.0
 // Distance we want the far navigation to end up from the mission site
 #define DESTINATION_BUFFER_DISTANCE 0.1
 // Max speed of OSV. Not currently implemented
@@ -24,7 +24,7 @@
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
 
 // Amount of time in ms that each loop waits
-#define LOOP_WAIT 100
+#define LOOP_WAIT 0
 
 // Trigger pin of ultrasonic sensor
 #define TRIG_PIN 12
@@ -61,14 +61,14 @@ float calibration_factor = -242;
 void setup() {
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 6, 7)) {
     // Eprintln("Waiting for Connection.");
   }
-  setMotorSpeed(-255, 255);
-  delay(2000);
-  setMotorSpeed(255, -255);
-  delay(2000);
-  setMotorSpeed(0, 0);
+  // setMotorSpeed(-255, 255);
+  // delay(2000);
+  // setMotorSpeed(255, -255);
+  // delay(2000);
+  // setMotorSpeed(0, 0);
   // shrug?
   delay(500);
 
@@ -99,21 +99,37 @@ void setup() {
     updateEverything();
   }
 
-  // Moves OSV to one of the three colunms.
-  startUp();
+  // // Moves OSV to one of the three colunms.
+  // startUp();
 
-  // Drive to the target close enough.
-  driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
+  // // Drive to the target close enough.
+  // driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
 
-  // Point towards final target.
-  orient(angleTo(desX, desY));
+  // // Point towards final target.
+  // orient(angleTo(desX, desY));
 
-  // Drive up close.
-  float dist = distanceTo(desX, desY);
-  if (dist > DESTINATION_BUFFER_DISTANCE) {
-    driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
-             locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
-  }
+  // // Drive up close.
+  // float dist = distanceTo(desX, desY);
+  // if (dist > DESTINATION_BUFFER_DISTANCE) {
+  //   driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
+  //            locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
+  // }
+
+  // Milestone 5
+  // Orient
+  // orient(0);
+  // delay(1000);
+  // orient(3.14 / 2.0);
+  // delay(5000);
+  // orient(0);
+  // delay(5000);
+  // orient(-3.14 / 2.0);
+  // delay(5000);
+  // orient(0);
+
+  // Driving
+  orient(0);
+  driveFar(3.5, locY, true);
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
