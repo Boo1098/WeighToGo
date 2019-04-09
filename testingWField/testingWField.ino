@@ -247,9 +247,10 @@ void avoidObstacle() {
   // }
 
   // Why write many line when few line do trick?
-  newY = locY > 1.333 ? 1 : (locY > 1 ? 1.666 : (locY > 0.666 ? 0.333 : 1));
+  newY = (locY > 1.333 || locY < 0.333) ? 1 : (locY > 1 ? 1.666 : 0.333);
+  double middleY = locY > 1 ? 1.333 : 0.666;
   orient((locY > 1.333 || (locY < 1 && locY > 0.666)) ? -1.57 : 1.57);
-  driveFar(locX, (locY > 1 ? 1.333 : 0.666), false);
+  driveFar(locX, middleY, false);
   driveFar(locX + 0.4, newY, false);
 
   // Re-orient forwards.
