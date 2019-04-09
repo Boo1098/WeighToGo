@@ -59,14 +59,16 @@ HX711 scale;
 float calibration_factor = -242;
 
 void setup() {
-  delay(5000);
-
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
   while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
-
+  setMotorSpeed(-255, 255);
+  delay(2000);
+  setMotorSpeed(255, -255);
+  delay(2000);
+  setMotorSpeed(0, 0);
   // shrug?
   delay(500);
 
