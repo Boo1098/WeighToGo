@@ -24,7 +24,7 @@
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
 
 // Amount of time in ms that each loop waits
-#define LOOP_WAIT 100
+#define LOOP_WAIT 0
 
 // Trigger pin of ultrasonic sensor
 #define TRIG_PIN 12
@@ -369,11 +369,14 @@ void printStats() {
 }
 
 void Near_Field_Nav() {
-  int Mat_Dist[15][2];
+  double Mat_Dist[15][2];
   Fill_Array(Mat_Dist);
-  orient(find_min(Mat_Dist));
-  while (getUltraDistance > 8) {
-    setMotorSpeed(255, 255);
+  double minimum = find_min(Mat_Dist);
+  Enes100.print("Minimum Angle: ");
+  Enes100.println(minimum);
+  orient(minimum);
+  while (getUltraDistance(TRIG_PIN, ECHO_PIN) > 8.0) {
+    setMotorSpeed(50, 50);
   }
   //while(getWeight<crit) {
   // Drop Claw
@@ -382,26 +385,35 @@ void Near_Field_Nav() {
   //sendData(getWeight, getMagneto)
 }
 
-void Fill_Array(int Mat_Dist[][2]) {
+void Fill_Array(double Mat_Dist[][2]) {
   for (int i = 0; i < 5; i++) {
-    orient(locT + (.175));
+    orient(locT + (.05));
     Mat_Dist[i][0] = locT;
     Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
+    Enes100.print("Measurement: ");
+    Enes100.print(Mat_Dist[i][0]);
+    Enes100.print(", ");
+    Enes100.println(Mat_Dist[i][1]);
   }
   for (int i = 5; i < 15; i++) {
-    orient(locT - (.175));
+    orient(locT - (.05));
     Mat_Dist[i][0] = locT;
     Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
+    Enes100.print("Measurement: ");
+    Enes100.print(Mat_Dist[i][0]);
+    Enes100.print(", ");
+    Enes100.println(Mat_Dist[i][1]);
   }
 }
 
-int find_min(int Mat_Dist[][2]) {
-  int min_val;
-  int min_loc;
+double find_min(double Mat_Dist[][2]) {
+  double min_val = 1000000;
+  double min_loc = 0;
   for (int i = 0; i < 15; i++) {
     if (Mat_Dist[i][1] < min_val) {
       min_val = Mat_Dist[i][1];
       min_loc = Mat_Dist[i][0];
     }
   }
+  return min_loc;
 }
