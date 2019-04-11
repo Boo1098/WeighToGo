@@ -63,7 +63,7 @@ void setup() {
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 6, 7)) {
     // Eprintln("Waiting for Connection.");
   }
 
@@ -350,7 +350,8 @@ void setMotorSpeed(int left, int right) {
 
 // Returns weight measured by load cell.
 double getWeight() {
-  return scale.get_units();
+  scale.set_scale(calibration_factor);
+  return scale.get_units(40);
 }
 
 // Print out stats every time updateEverything is ran.
@@ -371,42 +372,36 @@ void Near_Field_Nav() {
   int Mat_Dist[15][2];
   Fill_Array(Mat_Dist);
   orient(find_min(Mat_Dist));
-  while(getUltraDistance>8){
-    setMotorSpeed(255,255);
+  while (getUltraDistance > 8) {
+    setMotorSpeed(255, 255);
   }
   //while(getWeight<crit) {
-    // Drop Claw
-    // Lift Claw
+  // Drop Claw
+  // Lift Claw
   //}
   //sendData(getWeight, getMagneto)
 }
-  
 
 void Fill_Array(int Mat_Dist[][2]) {
-  
-  for(int i=0;i<5;i++) {   
-      orient(locT+(.175));
-      Mat_Dist[i][0]=locT;
-      Mat_Dist[i][1]=getUltraDistance(TRIG_PIN,ECHO_PIN);
+  for (int i = 0; i < 5; i++) {
+    orient(locT + (.175));
+    Mat_Dist[i][0] = locT;
+    Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
   }
-  for(int i=5;i<15;i++) {   
-      orient(locT-(.175));
-      Mat_Dist[i][0]=locT;
-      Mat_Dist[i][1]=getUltraDistance(TRIG_PIN,ECHO_PIN);
+  for (int i = 5; i < 15; i++) {
+    orient(locT - (.175));
+    Mat_Dist[i][0] = locT;
+    Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
   }
 }
 
 int find_min(int Mat_Dist[][2]) {
   int min_val;
   int min_loc;
-  for (int i=0;i<15;i++) {
-    if (Mat_Dist[i][1]<min_val) {
-      min_val=Mat_Dist[i][1];
-      min_loc=Mat_Dist[i][0];
+  for (int i = 0; i < 15; i++) {
+    if (Mat_Dist[i][1] < min_val) {
+      min_val = Mat_Dist[i][1];
+      min_loc = Mat_Dist[i][0];
     }
   }
 }
-
-
-
-  
