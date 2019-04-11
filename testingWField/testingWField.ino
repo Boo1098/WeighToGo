@@ -59,11 +59,11 @@ HX711 scale;
 float calibration_factor = -242;
 
 void setup() {
-  delay(5000);
+  delay(1000);
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 6, 7)) {
     // Eprintln("Waiting for Connection.");
   }
 
@@ -98,20 +98,21 @@ void setup() {
   }
 
   // Moves OSV to one of the three colunms.
-  startUp();
+  // startUp();
 
-  // Drive to the target close enough.
-  driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
+  // // Drive to the target close enough.
+  // driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
 
-  // Point towards final target.
-  orient(angleTo(desX, desY));
+  // // Point towards final target.
+  // orient(angleTo(desX, desY));
 
-  // Drive up close.
-  float dist = distanceTo(desX, desY);
-  if (dist > DESTINATION_BUFFER_DISTANCE) {
-    driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
-             locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
-  }
+  // // Drive up close.
+  // float dist = distanceTo(desX, desY);
+  // if (dist > DESTINATION_BUFFER_DISTANCE) {
+  //   driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
+  //            locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
+  // }
+  Near_Field_Nav();
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
