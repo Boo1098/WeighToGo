@@ -63,7 +63,7 @@ void setup() {
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 6, 7)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
 
@@ -98,7 +98,8 @@ void setup() {
   }
 
   // Moves OSV to one of the three colunms.
-  startUp();
+  //startUp();
+  orient(0);
 
   // Drive to the target close enough.
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
