@@ -11,20 +11,20 @@
 // Minimum speed required to turn
 #define MIN_SPEED_TURN 60.0
 // Distance in centimeters that triggers obstacle
-#define OBSTACLE_TRIGGER_DISTANCE 30.0
+#define OBSTACLE_TRIGGER_DISTANCE 25.0
 // Distance we want the far navigation to end up from the mission site
-#define DESTINATION_BUFFER_DISTANCE 0.1
+#define DESTINATION_BUFFER_DISTANCE 0.2
 // Max speed of OSV. Not currently implemented
 #define MAX_SPEED 255.0
 // Minimum speed OSV requires to move forwards
-#define MIN_SPEED 50.0
+#define MIN_SPEED 20.0
 // Proportional factor for driveFar corrections
 #define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
 // Proportional factor for orient corrections
 #define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
 
 // Amount of time in ms that each loop waits
-#define LOOP_WAIT 100
+#define LOOP_WAIT 0
 
 // Trigger pin of ultrasonic sensor
 #define TRIG_PIN 12
@@ -104,10 +104,10 @@ void setup() {
   // Drive to the target close enough.
   driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
 
-  // Point towards final target.
+  // // Point towards final target.
   orient(angleTo(desX, desY));
 
-  // Drive up close.
+  // // Drive up close.
   float dist = distanceTo(desX, desY);
   if (dist > DESTINATION_BUFFER_DISTANCE) {
     driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
@@ -144,9 +144,9 @@ void driveFar(double x, double y, bool obsCheck) {
 
       // Robot slows down as it gets closer to obstacle.
       double dist = getUltraDistance(TRIG_PIN, ECHO_PIN);
-      if (obsCheck && dist < 60.0) {
-        leftSpeed -= ((60.0 - dist) / 60.0) * (255.0 - MIN_SPEED);
-        rightSpeed -= ((60.0 - dist) / 60.0) * (255.0 - MIN_SPEED);
+      if (obsCheck && dist < 100.0) {
+        leftSpeed -= ((100.0 - dist) / 100.0) * (255.0 - MIN_SPEED);
+        rightSpeed -= ((100.0 - dist) / 100.0) * (255.0 - MIN_SPEED);
       }
 
       // Prints error
@@ -252,8 +252,8 @@ void avoidObstacle() {
   double newY = locY > 1.333 || locY < 0.666 ? 1 : locY > 1 ? 1.666 : 0.333;
   double middleY = locY > 1 ? 1.333 : 0.666;
   orient(locY > 1.333 || (locY < 1 && locY > 0.666) ? -1.57 : 1.57);
-  driveFar(locX, middleY, false);
-  driveFar(locX + 0.4, newY, false);
+  // driveFar(locX, middleY, false);
+  driveFar(locX, newY, false);
 
   // Re-orient forwards.
   orient(0);
