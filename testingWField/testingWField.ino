@@ -9,11 +9,11 @@
 * Setup Constants
 */
 // Minimum speed required to turn
-#define MIN_SPEED_TURN 60.0
+#define MIN_SPEED_TURN 45.0
 // Distance in centimeters that triggers obstacle
-#define OBSTACLE_TRIGGER_DISTANCE 25.0
+#define OBSTACLE_TRIGGER_DISTANCE 12.0
 // Distance we want the far navigation to end up from the mission site
-#define DESTINATION_BUFFER_DISTANCE 0.2
+#define DESTINATION_BUFFER_DISTANCE 0.1
 // Max speed of OSV. Not currently implemented
 #define MAX_SPEED 255.0
 // Minimum speed OSV requires to move forwards
@@ -59,13 +59,16 @@ HX711 scale;
 float calibration_factor = -242;
 
 void setup() {
-  delay(5000);
+  delay(1000);
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
   while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
+
+  delay(100);
+  Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6);
 
   // shrug?
   delay(500);
@@ -79,9 +82,9 @@ void setup() {
 
   // print out destination location
   Enes100.print("Destination is at (");
-  Enes100.print(desX);
+  Enes100.print(Enes100.destination.x);
   Enes100.print(", ");
-  Enes100.print(desY);
+  Enes100.print(Enes100.destination.y);
   Enes100.println(")");
 
   // Set pin modes of ultrasonic sensor
@@ -101,18 +104,22 @@ void setup() {
   //startUp();
   orient(0);
 
-  // Drive to the target close enough.
-  driveFar(desX - DESTINATION_BUFFER_DISTANCE, locY, true);
+  // // Drive to the target close enough.
+  driveFar(Enes100.destination.x - DESTINATION_BUFFER_DISTANCE, locY, true);
 
   // // Point towards final target.
-  orient(angleTo(desX, desY));
+
+  orient(angleTo(Enes100.destination.x, Enes100.destination.y));
 
   // // Drive up close.
-  float dist = distanceTo(desX, desY);
+  float dist = distanceTo(Enes100.destination.x, Enes100.destination.y);
   if (dist > DESTINATION_BUFFER_DISTANCE) {
     driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
              locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
   }
+  // orient(angleTo(desX, desY));
+
+  Near_Field_Nav();
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -131,6 +138,7 @@ void driveFar(double x, double y, bool obsCheck) {
     if (obsCheck && obstacle()) {
       Enes100.println("Obstacle Found!");
       flag = true;
+      setMotorSpeed(0, 0);
       avoidObstacle();
     } else {
       double leftSpeed = 255;
@@ -170,7 +178,7 @@ void driveFar(double x, double y, bool obsCheck) {
       }
 
       // Checks if destination has been reached.
-      if (distanceTo(x, y) < .05) {
+      if (distanceTo(x, y) < .1) {
         Enes100.println("Drived!");
         flag = true;
         leftSpeed = 0;
@@ -196,17 +204,18 @@ void startUp() {
   updateEverything();
 
   // Depending on column, drives to center of nearest.
-  if (locY - 0.333)
-    if (locY < 0.66) {
-      orient(locY < 0.33 ? 1.57 : -1.57);
-      driveFar(locX, 0.33, false);
-    } else if (locY < 1.33) {
-      orient(locY < 1.0 ? 1.57 : -1.57);
-      driveFar(locX, 1, false);
-    } else {
-      orient(locY < 1.66 ? 1.57 : -1.57);
-      driveFar(locX, 1.66, false);
-    }
+  if (!((locY - 0.333 > 0 ? locY - 0.333 : 0.333 - locY) < 0.2 || (locY - 1 > 0 ? locY - 1 : 1 - locY) < 0.2 || (locY - 1.666 > 0 ? locY - 1.666 : 1.666 - locY) < 0.2))
+    ;
+  if (locY < 0.66) {
+    orient(locY < 0.33 ? 1.57 : -1.57);
+    driveFar(locX, 0.33, false);
+  } else if (locY < 1.33) {
+    orient(locY < 1.0 ? 1.57 : -1.57);
+    driveFar(locX, 1, false);
+  } else {
+    orient(locY < 1.66 ? 1.57 : -1.57);
+    driveFar(locX, 1.66, false);
+  }
 
   // Orients self to get ready.
   orient(0);
@@ -370,12 +379,19 @@ void printStats() {
 }
 
 void Near_Field_Nav() {
-  int Mat_Dist[15][2];
+  double Mat_Dist[60][2];
   Fill_Array(Mat_Dist);
-  orient(find_min(Mat_Dist));
-  while (getUltraDistance > 8) {
-    setMotorSpeed(255, 255);
+  double minimum = find_min(Mat_Dist);
+  Enes100.print("Minimum Angle: ");
+  Enes100.println(minimum);
+  orient(minimum);
+  long t = ((minimum - 7.0) / 2.0) * 1000;
+  long start = millis();
+  // while (getUltraDistance(TRIG_PIN, ECHO_PIN) > 7.0) {
+  while (millis() - start <= t) {
+    setMotorSpeed(50, 50);
   }
+  setMotorSpeed(0, 0);
   //while(getWeight<crit) {
   // Drop Claw
   // Lift Claw
@@ -383,26 +399,35 @@ void Near_Field_Nav() {
   //sendData(getWeight, getMagneto)
 }
 
-void Fill_Array(int Mat_Dist[][2]) {
-  for (int i = 0; i < 5; i++) {
-    orient(locT + (.175));
+void Fill_Array(double Mat_Dist[][2]) {
+  for (int i = 0; i < 20; i++) {
+    orient(locT + (.02));
     Mat_Dist[i][0] = locT;
     Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
+    Enes100.print("Measurement: ");
+    Enes100.print(Mat_Dist[i][0]);
+    Enes100.print(", ");
+    Enes100.println(Mat_Dist[i][1]);
   }
-  for (int i = 5; i < 15; i++) {
-    orient(locT - (.175));
+  for (int i = 20; i < 60; i++) {
+    orient(locT - (.02));
     Mat_Dist[i][0] = locT;
     Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
+    Enes100.print("Measurement: ");
+    Enes100.print(Mat_Dist[i][0]);
+    Enes100.print(", ");
+    Enes100.println(Mat_Dist[i][1]);
   }
 }
 
-int find_min(int Mat_Dist[][2]) {
-  int min_val;
-  int min_loc;
-  for (int i = 0; i < 15; i++) {
+double find_min(double Mat_Dist[][2]) {
+  double min_val = 1000000;
+  double min_loc = 0;
+  for (int i = 0; i < 60; i++) {
     if (Mat_Dist[i][1] < min_val) {
       min_val = Mat_Dist[i][1];
       min_loc = Mat_Dist[i][0];
     }
   }
+  return min_loc;
 }
