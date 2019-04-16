@@ -1,5 +1,6 @@
 #include <Adafruit_MotorShield.h>
 #include <Enes100.h>
+#include <Servo.h>
 #include <Wire.h>
 #include <math.h>
 #include "HX711.h"
@@ -8,12 +9,13 @@
 /*
 * Setup Constants
 */
+int pos = 0;  // variable to store the servo position
 // Minimum speed required to turn
 #define MIN_SPEED_TURN 45.0
 // Distance in centimeters that triggers obstacle
 #define OBSTACLE_TRIGGER_DISTANCE 12.0
 // Distance we want the far navigation to end up from the mission site
-#define DESTINATION_BUFFER_DISTANCE 0.1
+#define DESTINATION_BUFFER_DISTANCE 0.35
 // Max speed of OSV. Not currently implemented
 #define MAX_SPEED 255.0
 // Minimum speed OSV requires to move forwards
@@ -55,6 +57,8 @@ Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 // Create scale object
 HX711 scale;
 
+Servo myservo;
+
 // Magic
 float calibration_factor = -242;
 
@@ -91,6 +95,8 @@ void setup() {
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
+  myservo.attach(10);
+
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
 
@@ -104,22 +110,37 @@ void setup() {
   //startUp();
   orient(0);
 
-  // // Drive to the target close enough.
+  // // // Drive to the target close enough.
   driveFar(Enes100.destination.x - DESTINATION_BUFFER_DISTANCE, locY, true);
 
-  // // Point towards final target.
+  // // // Point towards final target.
 
-  orient(angleTo(Enes100.destination.x, Enes100.destination.y));
+  // orient(angleTo(Enes100.destination.x, Enes100.destination.y));
 
-  // // Drive up close.
-  float dist = distanceTo(Enes100.destination.x, Enes100.destination.y);
-  if (dist > DESTINATION_BUFFER_DISTANCE) {
-    driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
-             locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
-  }
+  // // // Drive up close.
+  // float dist = distanceTo(Enes100.destination.x, Enes100.destination.y);
+  // if (dist > DESTINATION_BUFFER_DISTANCE) {
+  //   driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
+  //            locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
+  // }
   // orient(angleTo(desX, desY));
+  orient((locX - desX) < 0 ? -1.57 : 1.57);
+  driveClose(locX, desY);
+  orient(angleTo(desX, desY));
 
-  Near_Field_Nav();
+  // Near_Field_Nav();
+  driveClose(desX - .15, desY);
+  // orient(0);
+  // delay(2000);
+  // orient(1.57);
+  // delay(2000);
+  // orient(0);
+  // delay(2000);
+  // orient(-1.57);
+  // delay(2000);
+  // updateEverything();
+  // driveFar(3.7, locY, false);
+  retrieve();
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -192,6 +213,65 @@ void driveFar(double x, double y, bool obsCheck) {
       Enes100.println(rightSpeed);
       setMotorSpeed(leftSpeed, rightSpeed);
     }
+
+    // Delay for reasons?
+    delay(LOOP_WAIT);
+  }
+}
+// Drives to a point on the field with obstacle avoidance if obsCheck = true.
+void driveClose(double x, double y) {
+  Enes100.print("Driving close to ");
+  Enes100.print(x);
+  Enes100.print(", ");
+  Enes100.println(y);
+
+  // Run a loop until interruption
+  bool flag = false;
+  while (!flag) {
+    updateEverything();
+    double leftSpeed = 50;
+    double rightSpeed = 50;
+    double theta = locT - angleTo(x, y);
+    // abs is evil.
+    double atheta = theta;
+    if (atheta < 0) {
+      atheta *= -1.0;
+    }
+
+    // Prints error
+    Enes100.print("error: ");
+    Enes100.println(atheta);
+
+    // Checks there is enough error to correct for.
+    // if (atheta > 0.01) {
+    // Corrects in the correct direction.
+    if (theta > 0) {
+      rightSpeed -= abs(DRIVE_FAR_kP * theta);
+      if (rightSpeed < -50) {
+        rightSpeed = -50;
+      }
+    } else {
+      leftSpeed -= abs(DRIVE_FAR_kP * theta);
+      if (leftSpeed < -50) {
+        leftSpeed = -50;
+      }
+    }
+    // }
+
+    // Checks if destination has been reached.
+    if (distanceTo(x, y) < .1) {
+      Enes100.println("Drived!");
+      flag = true;
+      leftSpeed = 0;
+      rightSpeed = 0;
+    }
+
+    // Print speeds
+    Enes100.print("left: ");
+    Enes100.print(leftSpeed);
+    Enes100.print(", right: ");
+    Enes100.println(rightSpeed);
+    setMotorSpeed(leftSpeed, rightSpeed);
 
     // Delay for reasons?
     delay(LOOP_WAIT);
@@ -367,15 +447,30 @@ double getWeight() {
 // Print out stats every time updateEverything is ran.
 void printStats() {
   Enes100.print("Location: ");
-  Enes100.print(locX);
-  Enes100.print(", ");
-  Enes100.print(locY);
-  Enes100.print(", ");
-  Enes100.println(locT);
-  Enes100.print("Sensors: ");
+  if (locX < 0.65) {
+    Enes100.print("Landing Zone, ");
+  } else if (locX < 1.25) {
+    Enes100.print("Rocky Terrain, ");
+  } else {
+    Enes100.print("Obstacle Zone, ");
+  }
+  if (locY < .666) {
+    Enes100.println("Bottom Column");
+  } else if (locY < 1.333) {
+    Enes100.println("Middle Column");
+  } else {
+    Enes100.println("Top Column");
+  }
+
+  // Enes100.print(locX);
+  // Enes100.print(", ");
+  // Enes100.print(locY);
+  // Enes100.print(", ");
+  // Enes100.println(locT);
+  // Enes100.print("Sensors: ");
   // Enes100.print(getWeight());
   // Enes100.print("    ");
-  Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
+  // Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
 }
 
 void Near_Field_Nav() {
@@ -400,16 +495,17 @@ void Near_Field_Nav() {
 }
 
 void Fill_Array(double Mat_Dist[][2]) {
-  for (int i = 0; i < 20; i++) {
-    orient(locT + (.02));
-    Mat_Dist[i][0] = locT;
-    Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
-    Enes100.print("Measurement: ");
-    Enes100.print(Mat_Dist[i][0]);
-    Enes100.print(", ");
-    Enes100.println(Mat_Dist[i][1]);
-  }
-  for (int i = 20; i < 60; i++) {
+  // for (int i = 0; i < 20; i++) {
+  //   orient(locT + (.02));
+  //   Mat_Dist[i][0] = locT;
+  //   Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
+  //   Enes100.print("Measurement: ");
+  //   Enes100.print(Mat_Dist[i][0]);
+  //   Enes100.print(", ");
+  //   Enes100.println(Mat_Dist[i][1]);
+  // }
+  orient(locT + .02 * 30.0);
+  for (int i = 0; i < 60; i++) {
     orient(locT - (.02));
     Mat_Dist[i][0] = locT;
     Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
@@ -430,4 +526,27 @@ double find_min(double Mat_Dist[][2]) {
     }
   }
   return min_loc;
+}
+
+void retrieve() {
+  for (pos = 1; pos <= 91; pos += 1)  // Deccelerates to Stop
+  {                                   // in steps of 1 degree
+    myservo.write(pos);               // tell servo to go to position in variable 'pos'
+    delay(5);                         // waits 15ms for the servo to reach the position
+  }
+  delay(2000);  //Full stop for 5 seconds
+
+  for (pos = 91; pos <= 180; pos += 1)  //Accelerates to full CCW
+  {
+    myservo.write(pos);  // tell servo to go to position in variable 'pos'
+    delay(5);            // waits 15ms for the servo to reach the position
+  }
+  delay(2000);  //Full CCW for 5 seconds
+
+  for (pos = 180; pos >= 91; pos -= 1)  // Deccelerates to Stop
+  {                                     // in steps of 1 degree
+    myservo.write(pos);                 // tell servo to go to position in variable 'pos'
+    delay(5);                           // waits 15ms for the servo to reach the position
+  }
+  delay(2000);  //Full Stop for 5 seconds
 }
