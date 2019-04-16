@@ -130,16 +130,6 @@ void setup() {
 
   // Near_Field_Nav();
   driveClose(distanceTo(desX, desY) - .2);
-  // orient(0);
-  // delay(2000);
-  // orient(1.57);
-  // delay(2000);
-  // orient(0);
-  // delay(2000);
-  // orient(-1.57);
-  // delay(2000);
-  // updateEverything();
-  // driveFar(3.7, locY, false);
   retrieve();
 }
 
