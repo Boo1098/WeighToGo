@@ -124,12 +124,12 @@ void setup() {
   //            locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
   // }
   // orient(angleTo(desX, desY));
-  orient((locX - desX) < 0 ? -1.57 : 1.57);
-  driveClose(locX, desY);
+  orient((locY - desY) > 0 ? -1.57 : 1.57);
+  driveClose(locY - desY > 0 ? locY - desY : desY - locY);
   orient(angleTo(desX, desY));
 
   // Near_Field_Nav();
-  driveClose(desX - .15, desY);
+  driveClose(distanceTo(desX, desY) - .2);
   // orient(0);
   // delay(2000);
   // orient(1.57);
@@ -218,12 +218,15 @@ void driveFar(double x, double y, bool obsCheck) {
     delay(LOOP_WAIT);
   }
 }
-// Drives to a point on the field with obstacle avoidance if obsCheck = true.
-void driveClose(double x, double y) {
-  Enes100.print("Driving close to ");
-  Enes100.print(x);
-  Enes100.print(", ");
-  Enes100.println(y);
+
+// Drives slowly a distance in m.
+void driveClose(double dist) {
+  Enes100.print("Driving ");
+  Enes100.print(dist);
+  Enes100.println("m");
+  updateEverything();
+  double startX = locX;
+  double startY = locY;
 
   // Run a loop until interruption
   bool flag = false;
@@ -231,46 +234,14 @@ void driveClose(double x, double y) {
     updateEverything();
     double leftSpeed = 50;
     double rightSpeed = 50;
-    double theta = locT - angleTo(x, y);
-    // abs is evil.
-    double atheta = theta;
-    if (atheta < 0) {
-      atheta *= -1.0;
-    }
-
-    // Prints error
-    Enes100.print("error: ");
-    Enes100.println(atheta);
-
-    // Checks there is enough error to correct for.
-    // if (atheta > 0.01) {
-    // Corrects in the correct direction.
-    if (theta > 0) {
-      rightSpeed -= abs(DRIVE_FAR_kP * theta);
-      if (rightSpeed < -50) {
-        rightSpeed = -50;
-      }
-    } else {
-      leftSpeed -= abs(DRIVE_FAR_kP * theta);
-      if (leftSpeed < -50) {
-        leftSpeed = -50;
-      }
-    }
-    // }
 
     // Checks if destination has been reached.
-    if (distanceTo(x, y) < .1) {
+    if (distanceTo(startX, startY) > dist) {
       Enes100.println("Drived!");
       flag = true;
       leftSpeed = 0;
       rightSpeed = 0;
     }
-
-    // Print speeds
-    Enes100.print("left: ");
-    Enes100.print(leftSpeed);
-    Enes100.print(", right: ");
-    Enes100.println(rightSpeed);
     setMotorSpeed(leftSpeed, rightSpeed);
 
     // Delay for reasons?
