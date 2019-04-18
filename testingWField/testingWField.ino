@@ -480,18 +480,29 @@ void Fill_Array(double Mat_Dist[][2]) {
 }
 
 double find_min_angle(double Mat_Dist[][2]) {
-  double min_val = 1000000;
-  double min_loc = 0;
+  double min_val1 = DESTINATION_BUFFER_DISTANCE*1.5;
+  double min_loc1 = 0;
+  double min_val2 = 30;
+  double min_loc2 = 0;
   for (int i = 0; i < 60; i++) {
     if (Mat_Dist[i][1] < min_val) {
-      min_val = Mat_Dist[i][1];
-      min_loc = Mat_Dist[i][0];
+      min_val1 = Mat_Dist[i][1];
+      min_loc1 = Mat_Dist[i][0];
     }
+    break;
   }
-  return min_loc;
+  for (int i = 59; i >=0; i--) {
+    if (Mat_Dist[i][1] < min_val) {
+      min_val2 = Mat_Dist[i][1];
+      min_loc2 = Mat_Dist[i][0];
+      
+    }
+    break;
+  }
+  return (min_loc1+min_loc2)/2;
 }
 double find_min_dist(double Mat_Dist[][2]) {
-  double min_val = 1000000;
+  double min_val = 30;
   double min_loc = 0;
   for (int i = 0; i < 60; i++) {
     if (Mat_Dist[i][1] < min_val) {
