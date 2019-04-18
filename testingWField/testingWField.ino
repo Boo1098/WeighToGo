@@ -18,7 +18,7 @@ int pos = 0;
 // Distance in centimeters that triggers obstacle
 #define OBSTACLE_TRIGGER_DISTANCE 12.0
 // Distance we want the far navigation to end up from the mission site
-#define DESTINATION_BUFFER_DISTANCE 0.2
+#define DESTINATION_BUFFER_DISTANCE 0.21
 // Max speed of OSV. Not currently implemented
 #define MAX_SPEED 255.0
 // Minimum speed OSV requires to move forwards
@@ -137,7 +137,7 @@ void setup() {
   Near_Field_Nav();
   // driveClose(distanceTo(desX, desY) - .2);
   myservo.attach(9);
-  myservo.attach(91);
+  myservo.write(91);
   retrieve();
 }
 
@@ -450,7 +450,7 @@ void Near_Field_Nav() {
   orient(minimum_angle);
   // long t = ((minimum - 7.0) / 2.0) * 1000;
   // long start = millis();
-  while (getUltraDistance(TRIG_PIN, ECHO_PIN) > 6.5) {
+  while (getUltraDistance(TRIG_PIN, ECHO_PIN) > 9.5) {
     // while (millis() - start <= t) {
     setMotorSpeed(50, 50);
   }
@@ -523,4 +523,6 @@ void retrieve() {
     delay(5);                           // waits 15ms for the servo to reach the position
   }
   delay(2000);  //Full Stop for 5 seconds
+  while (true) {
+  }
 }
