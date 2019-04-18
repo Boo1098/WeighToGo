@@ -26,7 +26,7 @@ int pos = 0;
 // Proportional factor for driveFar corrections
 #define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
 // Proportional factor for orient corrections
-#define ORIENT_kP (255.0 - MIN_SPEED_TURN) / 3.14
+#define ORIENT_kP (255.0 - MIN_SPEED_TURN) * 2.0 / 3.14
 
 // Amount of time in ms that each loop waits
 #define LOOP_WAIT 0
@@ -98,8 +98,8 @@ void setup() {
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
-  myservo.attach(10);
-  myservo.write(91);
+  // myservo.attach(9);
+  // myservo.write(91);
 
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
@@ -118,22 +118,26 @@ void setup() {
   driveFar(Enes100.destination.x - DESTINATION_BUFFER_DISTANCE, locY, true);
 
   // // // Point towards final target.
+  orient((locY - desY) > 0 ? -1.57 : 1.57);
+  driveClose(locY - desY > 0 ? locY - desY : desY - locY);
 
-  // orient(angleTo(Enes100.destination.x, Enes100.destination.y));
+  orient(angleTo(Enes100.destination.x, Enes100.destination.y));
 
   // // // Drive up close.
+  driveClose(distanceTo(desX, desY) - DESTINATION_BUFFER_DISTANCE);
   // float dist = distanceTo(Enes100.destination.x, Enes100.destination.y);
   // if (dist > DESTINATION_BUFFER_DISTANCE) {
   //   driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
   //            locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
   // }
   // orient(angleTo(desX, desY));
-  // orient((locY - desY) > 0 ? -1.57 : 1.57);
   // driveClose(locY - desY > 0 ? locY - desY : desY - locY);
   // orient(angleTo(desX, desY));
 
   Near_Field_Nav();
   // driveClose(distanceTo(desX, desY) - .2);
+  myservo.attach(9);
+  myservo.attach(91);
   retrieve();
 }
 
@@ -427,8 +431,11 @@ void printStats() {
 void Near_Field_Nav() {
   double Mat_Dist[60][2];
   Fill_Array(Mat_Dist);
-  double minimum = find_min(Mat_Dist);
-  if (minimum > DESTINATION_BUFFER_DISTANCE * 2.0) {
+  double minimum_angle = find_min_angle(Mat_Dist);
+  double minimum_dist = find_min_dist(Mat_Dist);
+  Enes100.print("Minimum Distance: ");
+  Enes100.println(minimum_dist);
+  if (minimum_dist > (DESTINATION_BUFFER_DISTANCE * 2.0) * 100.0) {
     Enes100.println("Unable to detect debris. REORIENTING!");
     updateEverything();
     orient(locY > 1 ? 1.57 : -1.57);
@@ -439,11 +446,11 @@ void Near_Field_Nav() {
     return;
   }
   Enes100.print("Minimum Angle: ");
-  Enes100.println(minimum);
-  orient(minimum);
+  Enes100.println(minimum_angle);
+  orient(minimum_angle);
   // long t = ((minimum - 7.0) / 2.0) * 1000;
   // long start = millis();
-  while (getUltraDistance(TRIG_PIN, ECHO_PIN) > 7.0) {
+  while (getUltraDistance(TRIG_PIN, ECHO_PIN) > 6.5) {
     // while (millis() - start <= t) {
     setMotorSpeed(50, 50);
   }
@@ -460,9 +467,9 @@ void Fill_Array(double Mat_Dist[][2]) {
   //   Enes100.print(", ");
   //   Enes100.println(Mat_Dist[i][1]);
   // }
-  orient(locT + .02 * 30.0);
+  orient(locT + .01 * 30.0);
   for (int i = 0; i < 60; i++) {
-    orient(locT - (.02));
+    orient(locT - (.01));
     Mat_Dist[i][0] = locT;
     Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
     Enes100.print("Measurement: ");
@@ -472,7 +479,7 @@ void Fill_Array(double Mat_Dist[][2]) {
   }
 }
 
-double find_min(double Mat_Dist[][2]) {
+double find_min_angle(double Mat_Dist[][2]) {
   double min_val = 1000000;
   double min_loc = 0;
   for (int i = 0; i < 60; i++) {
@@ -482,6 +489,17 @@ double find_min(double Mat_Dist[][2]) {
     }
   }
   return min_loc;
+}
+double find_min_dist(double Mat_Dist[][2]) {
+  double min_val = 1000000;
+  double min_loc = 0;
+  for (int i = 0; i < 60; i++) {
+    if (Mat_Dist[i][1] < min_val) {
+      min_val = Mat_Dist[i][1];
+      min_loc = Mat_Dist[i][0];
+    }
+  }
+  return min_val;
 }
 
 void retrieve() {
