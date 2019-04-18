@@ -9,13 +9,16 @@
 /*
 * Setup Constants
 */
-int pos = 0;  // variable to store the servo position
+// Debug Prints
+#define DEBUG false
+// variable to store the servo position
+int pos = 0;
 // Minimum speed required to turn
 #define MIN_SPEED_TURN 45.0
 // Distance in centimeters that triggers obstacle
 #define OBSTACLE_TRIGGER_DISTANCE 12.0
 // Distance we want the far navigation to end up from the mission site
-#define DESTINATION_BUFFER_DISTANCE 0.35
+#define DESTINATION_BUFFER_DISTANCE 0.2
 // Max speed of OSV. Not currently implemented
 #define MAX_SPEED 255.0
 // Minimum speed OSV requires to move forwards
@@ -96,6 +99,7 @@ void setup() {
   pinMode(ECHO_PIN, INPUT);
 
   myservo.attach(10);
+  myservo.write(91);
 
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
@@ -124,12 +128,12 @@ void setup() {
   //            locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
   // }
   // orient(angleTo(desX, desY));
-  orient((locY - desY) > 0 ? -1.57 : 1.57);
-  driveClose(locY - desY > 0 ? locY - desY : desY - locY);
-  orient(angleTo(desX, desY));
+  // orient((locY - desY) > 0 ? -1.57 : 1.57);
+  // driveClose(locY - desY > 0 ? locY - desY : desY - locY);
+  // orient(angleTo(desX, desY));
 
-  // Near_Field_Nav();
-  driveClose(distanceTo(desX, desY) - .2);
+  Near_Field_Nav();
+  // driveClose(distanceTo(desX, desY) - .2);
   retrieve();
 }
 
@@ -443,21 +447,26 @@ void Near_Field_Nav() {
   double Mat_Dist[60][2];
   Fill_Array(Mat_Dist);
   double minimum = find_min(Mat_Dist);
+  if (minimum > DESTINATION_BUFFER_DISTANCE * 2.0) {
+    Enes100.println("Unable to detect debris. REORIENTING!");
+    updateEverything();
+    orient(locY > 1 ? 1.57 : -1.57);
+    driveClose(distanceTo(desX, desY) * sqrt(3.0));
+    orient(angleTo(desX, desY));
+    driveClose(distanceTo(desX, desY) - DESTINATION_BUFFER_DISTANCE);
+    Near_Field_Nav();
+    return;
+  }
   Enes100.print("Minimum Angle: ");
   Enes100.println(minimum);
   orient(minimum);
-  long t = ((minimum - 7.0) / 2.0) * 1000;
-  long start = millis();
-  // while (getUltraDistance(TRIG_PIN, ECHO_PIN) > 7.0) {
-  while (millis() - start <= t) {
+  // long t = ((minimum - 7.0) / 2.0) * 1000;
+  // long start = millis();
+  while (getUltraDistance(TRIG_PIN, ECHO_PIN) > 7.0) {
+    // while (millis() - start <= t) {
     setMotorSpeed(50, 50);
   }
   setMotorSpeed(0, 0);
-  //while(getWeight<crit) {
-  // Drop Claw
-  // Lift Claw
-  //}
-  //sendData(getWeight, getMagneto)
 }
 
 void Fill_Array(double Mat_Dist[][2]) {
