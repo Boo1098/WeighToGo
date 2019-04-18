@@ -179,8 +179,10 @@ void driveFar(double x, double y, bool obsCheck) {
       }
 
       // Prints error
-      Enes100.print("error: ");
-      Enes100.println(atheta);
+      if (DEBUG) {
+        Enes100.print("error: ");
+        Enes100.println(atheta);
+      }
 
       // Checks there is enough error to correct for.
       if (atheta > 0.01) {
@@ -207,10 +209,12 @@ void driveFar(double x, double y, bool obsCheck) {
       }
 
       // Print speeds
-      Enes100.print("left: ");
-      Enes100.print(leftSpeed);
-      Enes100.print(", right: ");
-      Enes100.println(rightSpeed);
+      if (DEBUG) {
+        Enes100.print("left: ");
+        Enes100.print(leftSpeed);
+        Enes100.print(", right: ");
+        Enes100.println(rightSpeed);
+      }
       setMotorSpeed(leftSpeed, rightSpeed);
     }
 
@@ -337,8 +341,10 @@ void orient(double t) {
     double error = theta - t;
 
     // Print error.
-    Enes100.print("error: ");
-    Enes100.println(error);
+    if (DEBUG) {
+      Enes100.print("error: ");
+      Enes100.println(error);
+    }
 
     // Check if orientation is correct.
     // abs is evil.
@@ -356,8 +362,10 @@ void orient(double t) {
       }
 
       // Print output.
-      Enes100.print("output: ");
-      Enes100.println(output);
+      if (DEBUG) {
+        Enes100.print("output: ");
+        Enes100.println(output);
+      }
 
       // Spins in correct direction.
       if (error > 0) {
@@ -416,31 +424,33 @@ double getWeight() {
 
 // Print out stats every time updateEverything is ran.
 void printStats() {
-  Enes100.print("Location: ");
-  if (locX < 0.65) {
-    Enes100.print("Landing Zone, ");
-  } else if (locX < 1.25) {
-    Enes100.print("Rocky Terrain, ");
-  } else {
-    Enes100.print("Obstacle Zone, ");
-  }
-  if (locY < .666) {
-    Enes100.println("Bottom Column");
-  } else if (locY < 1.333) {
-    Enes100.println("Middle Column");
-  } else {
-    Enes100.println("Top Column");
-  }
+  if (DEBUG) {
+    Enes100.print("Location: ");
+    // if (locX < 0.65) {
+    //   Enes100.print("Landing Zone, ");
+    // } else if (locX < 1.25) {
+    //   Enes100.print("Rocky Terrain, ");
+    // } else {
+    //   Enes100.print("Obstacle Zone, ");
+    // }
+    // if (locY < .666) {
+    //   Enes100.println("Bottom Column");
+    // } else if (locY < 1.333) {
+    //   Enes100.println("Middle Column");
+    // } else {
+    //   Enes100.println("Top Column");
+    // }
 
-  // Enes100.print(locX);
-  // Enes100.print(", ");
-  // Enes100.print(locY);
-  // Enes100.print(", ");
-  // Enes100.println(locT);
-  // Enes100.print("Sensors: ");
-  // Enes100.print(getWeight());
-  // Enes100.print("    ");
-  // Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
+    Enes100.print(locX);
+    Enes100.print(", ");
+    Enes100.print(locY);
+    Enes100.print(", ");
+    Enes100.println(locT);
+    Enes100.print("Sensors: ");
+    // Enes100.print(getWeight());
+    // Enes100.print("    ");
+    Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
+  }
 }
 
 void Near_Field_Nav() {
