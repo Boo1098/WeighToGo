@@ -139,6 +139,7 @@ void driveFar(double x, double y, bool obsCheck) {
   Enes100.print(x);
   Enes100.print(", ");
   Enes100.println(y);
+  double oldDist = getUltraDistance(TRIG_PIN, ECHO_PIN);
 
   // Run a loop until interruption
   bool flag = false;
@@ -163,6 +164,11 @@ void driveFar(double x, double y, bool obsCheck) {
 
       // Robot slows down as it gets closer to obstacle.
       double dist = getUltraDistance(TRIG_PIN, ECHO_PIN);
+      if ((dist - oldDist) > 100.0 || (oldDist - dist) > 100.0) {
+        dist = oldDist;
+        oldDist = getUltraDistance(TRIG_PIN, ECHO_PIN);
+      }
+
       if (obsCheck && dist < 100.0) {
         leftSpeed -= ((100.0 - dist) / 100.0) * (255.0 - MIN_SPEED);
         rightSpeed -= ((100.0 - dist) / 100.0) * (255.0 - MIN_SPEED);
