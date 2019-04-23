@@ -147,9 +147,9 @@ void setup() {
 
   // Near_Field_Nav();
   // driveClose(distanceTo(desX, desY) - .2);
-  // myservo.attach(9);
-  // myservo.write(91);
-  // retrieve();
+  myservo.attach(9);
+  myservo.write(91);
+  retrieve();
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -524,26 +524,39 @@ double find_min_dist(double Mat_Dist[][2]) {
 }
 
 void retrieve() {
+  Enes100.println("Begin Acceleration Full CW");
+  for (pos = 91; pos >= 1; pos -= 1)  //Accelerates to full CW
+  {
+    myservo.write(pos);  // tell servo to go to position in variable 'pos'
+    delay(5);            // waits 15ms for the servo to reach the position
+  }
+  Enes100.println("At Full CW");
+  delay(600);  //Full CW for 5 seconds
+
+  Enes100.println("Begin Deceleration to Stop");
   for (pos = 1; pos <= 91; pos += 1)  // Deccelerates to Stop
   {                                   // in steps of 1 degree
     myservo.write(pos);               // tell servo to go to position in variable 'pos'
     delay(5);                         // waits 15ms for the servo to reach the position
   }
+  Enes100.println("Full stop, 5 seconds");
   delay(2000);  //Full stop for 5 seconds
 
+  Enes100.println("Begin Acceleration Full CCW");
   for (pos = 91; pos <= 180; pos += 1)  //Accelerates to full CCW
   {
     myservo.write(pos);  // tell servo to go to position in variable 'pos'
     delay(5);            // waits 15ms for the servo to reach the position
   }
-  delay(2000);  //Full CCW for 5 seconds
+  Enes100.println("At Full CCW");
+  delay(700);  //Full CCW for 5 seconds
 
+  Enes100.println("Begin Deceleration to Stop");
   for (pos = 180; pos >= 91; pos -= 1)  // Deccelerates to Stop
   {                                     // in steps of 1 degree
     myservo.write(pos);                 // tell servo to go to position in variable 'pos'
     delay(5);                           // waits 15ms for the servo to reach the position
   }
+  Enes100.println("Full stop, 5 seconds");
   delay(2000);  //Full Stop for 5 seconds
-  while (true) {
-  }
 }
