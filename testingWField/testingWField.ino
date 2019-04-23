@@ -26,7 +26,9 @@ int pos = 0;
 // Proportional factor for driveFar corrections
 #define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
 // Proportional factor for orient corrections
-#define ORIENT_kP (255.0 - MIN_SPEED_TURN) * 2.0 / 3.14
+#define ORIENT_kP ((255.0 - MIN_SPEED_TURN) * 2.0 / 3.14)
+// I like FUDGE
+#define FUDGE 0
 
 // Amount of time in ms that each loop waits
 #define LOOP_WAIT 0
@@ -119,12 +121,21 @@ void setup() {
 
   // // // Point towards final target.
   orient((locY - desY) > 0 ? -1.57 : 1.57);
-  driveClose(locY - desY > 0 ? locY - desY : desY - locY);
+  double perspective = 0;
+  if (locY > 1.333) {
+    perspective = -.01;
+  } else if (locY < .666) {
+    perspective = .01;
+  }
+  driveClose((locY - desY > 0 ? locY - desY : desY - locY) + perspective);
 
   orient(angleTo(Enes100.destination.x, Enes100.destination.y));
 
   // // // Drive up close.
-  driveClose(distanceTo(desX, desY) - DESTINATION_BUFFER_DISTANCE);
+  // driveClose(distanceTo(desX, desY) - DESTINATION_BUFFER_DISTANCE);
+  driveClose(distanceTo(desX, desY) - .15);
+  updateEverything();
+  orient(angleTo(desX, desY));
   // float dist = distanceTo(Enes100.destination.x, Enes100.destination.y);
   // if (dist > DESTINATION_BUFFER_DISTANCE) {
   //   driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
@@ -134,11 +145,11 @@ void setup() {
   // driveClose(locY - desY > 0 ? locY - desY : desY - locY);
   // orient(angleTo(desX, desY));
 
-  Near_Field_Nav();
+  // Near_Field_Nav();
   // driveClose(distanceTo(desX, desY) - .2);
-  myservo.attach(9);
-  myservo.write(91);
-  retrieve();
+  // myservo.attach(9);
+  // myservo.write(91);
+  // retrieve();
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -223,7 +234,7 @@ void driveFar(double x, double y, bool obsCheck) {
     }
 
     // Delay for reasons?
-    delay(LOOP_WAIT);
+    // delay(LOOP_WAIT);
   }
 }
 
@@ -244,7 +255,7 @@ void driveClose(double dist) {
     double rightSpeed = 50;
 
     // Checks if destination has been reached.
-    if (distanceTo(startX, startY) > dist) {
+    if (distanceTo(startX, startY) >= dist) {
       Enes100.println("Drived!");
       flag = true;
       leftSpeed = 0;
@@ -253,7 +264,7 @@ void driveClose(double dist) {
     setMotorSpeed(leftSpeed, rightSpeed);
 
     // Delay for reasons?
-    delay(LOOP_WAIT);
+    // delay(LOOP_WAIT);
   }
 }
 
@@ -435,7 +446,7 @@ void Near_Field_Nav() {
   double minimum_dist = find_min_dist(Mat_Dist);
   Enes100.print("Minimum Distance: ");
   Enes100.println(minimum_dist);
-  if (minimum_dist > (DESTINATION_BUFFER_DISTANCE * 2.0) * 100.0) {
+  if (minimum_angle == -999) {
     Enes100.println("Unable to detect debris. REORIENTING!");
     updateEverything();
     orient(locY > 1 ? 1.57 : -1.57);
@@ -447,7 +458,7 @@ void Near_Field_Nav() {
   }
   Enes100.print("Minimum Angle: ");
   Enes100.println(minimum_angle);
-  orient(minimum_angle);
+  orient(minimum_angle + FUDGE);
   // long t = ((minimum - 7.0) / 2.0) * 1000;
   // long start = millis();
   while (getUltraDistance(TRIG_PIN, ECHO_PIN) > 9.5) {
@@ -480,26 +491,25 @@ void Fill_Array(double Mat_Dist[][2]) {
 }
 
 double find_min_angle(double Mat_Dist[][2]) {
-  double min_val1 = DESTINATION_BUFFER_DISTANCE*1.5;
-  double min_loc1 = 0;
-  double min_val2 = 30;
-  double min_loc2 = 0;
+  double min_val1 = DESTINATION_BUFFER_DISTANCE * 1.5 * 100.0;
+  double min_loc1 = -999;
+  double min_val2 = DESTINATION_BUFFER_DISTANCE * 1.5 * 100.0;
+  double min_loc2 = -999;
   for (int i = 0; i < 60; i++) {
-    if (Mat_Dist[i][1] < min_val) {
+    if (Mat_Dist[i][1] < min_val1) {
       min_val1 = Mat_Dist[i][1];
       min_loc1 = Mat_Dist[i][0];
     }
     break;
   }
-  for (int i = 59; i >=0; i--) {
-    if (Mat_Dist[i][1] < min_val) {
+  for (int i = 59; i >= 0; i--) {
+    if (Mat_Dist[i][1] < min_val2) {
       min_val2 = Mat_Dist[i][1];
       min_loc2 = Mat_Dist[i][0];
-      
     }
     break;
   }
-  return (min_loc1+min_loc2)/2;
+  return (min_loc1 + min_loc2) / 2;
 }
 double find_min_dist(double Mat_Dist[][2]) {
   double min_val = 30;
