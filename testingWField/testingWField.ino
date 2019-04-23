@@ -119,7 +119,7 @@ void setup() {
   // // // Drive to the target close enough.
   driveFar(Enes100.destination.x - DESTINATION_BUFFER_DISTANCE, locY, true);
 
-  // // // Point towards final target.
+  // Point towards final target.
   orient((locY - desY) > 0 ? -1.57 : 1.57);
   double perspective = 0;
   if (locY > 1.333) {
@@ -131,25 +131,15 @@ void setup() {
 
   orient(angleTo(Enes100.destination.x, Enes100.destination.y));
 
-  // // // Drive up close.
-  // driveClose(distanceTo(desX, desY) - DESTINATION_BUFFER_DISTANCE);
+  // Drive up close.
   driveClose(distanceTo(desX, desY) - .15);
   updateEverything();
   orient(angleTo(desX, desY));
-  // float dist = distanceTo(Enes100.destination.x, Enes100.destination.y);
-  // if (dist > DESTINATION_BUFFER_DISTANCE) {
-  //   driveFar(locX + (desX - locX) * (dist - DESTINATION_BUFFER_DISTANCE) / dist,
-  //            locY + (desY - locY) * (dist - DESTINATION_BUFFER_DISTANCE) / dist, false);
-  // }
-  // orient(angleTo(desX, desY));
-  // driveClose(locY - desY > 0 ? locY - desY : desY - locY);
-  // orient(angleTo(desX, desY));
-
-  // Near_Field_Nav();
-  // driveClose(distanceTo(desX, desY) - .2);
   myservo.attach(9);
   myservo.write(91);
   retrieve();
+  delay(5000);
+  Enes100.mission(getWeight(50));
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -403,9 +393,9 @@ void setMotorSpeed(int left, int right) {
 }
 
 // Returns weight measured by load cell.
-double getWeight() {
+double getWeight(int samples) {
   scale.set_scale(calibration_factor);
-  return scale.get_units(40);
+  return scale.get_units(samples);
 }
 
 // Print out stats every time updateEverything is ran.
