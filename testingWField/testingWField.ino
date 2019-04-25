@@ -16,9 +16,9 @@ int pos = 0;
 // Minimum speed required to turn
 #define MIN_SPEED_TURN 45.0
 // Distance in centimeters that triggers obstacle
-#define OBSTACLE_TRIGGER_DISTANCE 12.0
+#define OBSTACLE_TRIGGER_DISTANCE 9.5
 // Distance we want the far navigation to end up from the mission site
-#define DESTINATION_BUFFER_DISTANCE 0.21
+#define DESTINATION_BUFFER_DISTANCE 0.25
 // Max speed of OSV. Not currently implemented
 #define MAX_SPEED 255.0
 // Minimum speed OSV requires to move forwards
@@ -29,6 +29,7 @@ int pos = 0;
 #define ORIENT_kP ((255.0 - MIN_SPEED_TURN) * 2.0 / 3.14)
 // I like FUDGE
 #define FUDGE 0
+#define PERSPECTIVE 0.07
 
 // Amount of time in ms that each loop waits
 #define LOOP_WAIT 0
@@ -62,7 +63,7 @@ Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 // Create scale object
 HX711 scale;
 
-Servo myservo;
+Servo myServo;
 
 // Magic
 float calibration_factor = -242;
@@ -72,12 +73,12 @@ void setup() {
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 6, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
 
   delay(100);
-  Enes100.begin("Weigh to go", DEBRIS, 5, 7, 6);
+  Enes100.begin("Weigh to go", DEBRIS, 6, 7, 6);
 
   // shrug?
   delay(500);
@@ -100,8 +101,8 @@ void setup() {
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
-  // myservo.attach(9);
-  // myservo.write(91);
+  // myServo.attach(9);
+  // myServo.write(91);
 
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
@@ -113,33 +114,32 @@ void setup() {
   }
 
   // Moves OSV to one of the three colunms.
-  //startUp();
-  orient(0);
+  startUp();
+  // orient(0);
 
   // // // Drive to the target close enough.
   driveFar(Enes100.destination.x - DESTINATION_BUFFER_DISTANCE, locY, true);
 
   // Point towards final target.
   orient((locY - desY) > 0 ? -1.57 : 1.57);
-  double perspective = 0;
-  if (locY > 1.333) {
-    perspective = -.01;
-  } else if (locY < .666) {
-    perspective = .01;
-  }
-  driveClose((locY - desY > 0 ? locY - desY : desY - locY) + perspective);
+  driveClose((locY - desY > 0 ? locY - desY : desY - locY));
+  driveClose((locY - desY > 0 ? locY - desY : desY - locY));
 
-  orient(angleTo(Enes100.destination.x, Enes100.destination.y));
+  double perspective = locT < 0 ? 1 : -1;
+  driveClose(perspective * (0.07 / 0.63) * (desY - 1.0 > 0 ? desY - 1.0 : 1.0 - desY));
+  // orient(angleTo(Enes100.destination.x, Enes100.destination.y));
+  orient(0);
 
   // Drive up close.
-  driveClose(distanceTo(desX, desY) - .15);
+  driveClose(distanceTo(desX, desY) - .14);
+  orient(0);
   updateEverything();
-  orient(angleTo(desX, desY));
-  myservo.attach(9);
-  myservo.write(91);
-  retrieve();
-  delay(5000);
-  Enes100.mission(getWeight(50));
+  // orient(angleTo(desX, desY));
+  // myServo.attach(9);
+  // myServo.write(91);
+  // retrieve();
+  // delay(5000);
+  // Enes100.mission(getWeight(50));
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -230,6 +230,11 @@ void driveFar(double x, double y, bool obsCheck) {
 
 // Drives slowly a distance in m.
 void driveClose(double dist) {
+  boolean negative = false;
+  if (dist < 0) {
+    negative = true;
+    dist = -dist;
+  }
   Enes100.print("Driving ");
   Enes100.print(dist);
   Enes100.println("m");
@@ -241,8 +246,8 @@ void driveClose(double dist) {
   bool flag = false;
   while (!flag) {
     updateEverything();
-    double leftSpeed = 50;
-    double rightSpeed = 50;
+    double leftSpeed = negative ? -50 : 50;
+    double rightSpeed = negative ? -50 : 50;
 
     // Checks if destination has been reached.
     if (distanceTo(startX, startY) >= dist) {
@@ -515,38 +520,11 @@ double find_min_dist(double Mat_Dist[][2]) {
 
 void retrieve() {
   Enes100.println("Begin Acceleration Full CW");
-  for (pos = 91; pos >= 1; pos -= 1)  //Accelerates to full CW
-  {
-    myservo.write(pos);  // tell servo to go to position in variable 'pos'
-    delay(5);            // waits 15ms for the servo to reach the position
-  }
-  Enes100.println("At Full CW");
-  delay(600);  //Full CW for 5 seconds
+  myServo.writeMicroseconds(1000);
+  delay(2600);
+  myServo.writeMicroseconds(1500);
 
-  Enes100.println("Begin Deceleration to Stop");
-  for (pos = 1; pos <= 91; pos += 1)  // Deccelerates to Stop
-  {                                   // in steps of 1 degree
-    myservo.write(pos);               // tell servo to go to position in variable 'pos'
-    delay(5);                         // waits 15ms for the servo to reach the position
-  }
-  Enes100.println("Full stop, 5 seconds");
-  delay(2000);  //Full stop for 5 seconds
-
-  Enes100.println("Begin Acceleration Full CCW");
-  for (pos = 91; pos <= 180; pos += 1)  //Accelerates to full CCW
-  {
-    myservo.write(pos);  // tell servo to go to position in variable 'pos'
-    delay(5);            // waits 15ms for the servo to reach the position
-  }
-  Enes100.println("At Full CCW");
-  delay(700);  //Full CCW for 5 seconds
-
-  Enes100.println("Begin Deceleration to Stop");
-  for (pos = 180; pos >= 91; pos -= 1)  // Deccelerates to Stop
-  {                                     // in steps of 1 degree
-    myservo.write(pos);                 // tell servo to go to position in variable 'pos'
-    delay(5);                           // waits 15ms for the servo to reach the position
-  }
-  Enes100.println("Full stop, 5 seconds");
-  delay(2000);  //Full Stop for 5 seconds
+  myServo.writeMicroseconds(2000);
+  delay(2700);  //Full Stop for 5 seconds
+  myServo.writeMicroseconds(1500);
 }
