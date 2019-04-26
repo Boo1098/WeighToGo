@@ -125,7 +125,7 @@ void setup() {
   driveClose((locY - desY > 0 ? locY - desY : desY - locY));
   driveClose((locY - desY > 0 ? locY - desY : desY - locY));
 
-  double perspective = locT < 0 ? 1 : -1;
+  double perspective = (locT < 0 ? 1 : -1) * (desY > 0 ? -1 : 1);
   driveClose(perspective * (0.07 / 0.63) * (desY - 1.0 > 0 ? desY - 1.0 : 1.0 - desY));
   // orient(angleTo(Enes100.destination.x, Enes100.destination.y));
   orient(0);
