@@ -11,7 +11,7 @@
 * Setup Constants
 */
 // Debug Prints
-#define DEBUG false
+#define DEBUG true
 // variable to store the servo position
 int pos = 0;
 // Minimum speed required to turn
@@ -32,7 +32,7 @@ int pos = 0;
 #define FUDGE 0
 #define PERSPECTIVE 0.07
 // Weight of claw with nothing on it.
-#define BASE_WEIGHT 0
+#define BASE_WEIGHT 30
 
 // Amount of time in ms that each loop waits
 #define LOOP_WAIT 0
@@ -68,7 +68,7 @@ Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 // Create scale object
 HX711 scale;
 
-Servo myServo;
+Servo myservo;
 DFRobot_QMC5883 compass;
 double baseline;
 
@@ -76,16 +76,18 @@ double baseline;
 float calibration_factor = -242;
 
 void setup() {
-  delay(1000);
+  pinMode(8, INPUT_PULLUP);
+
+  delay(10000);
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 6, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 10, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
 
-  delay(100);
-  Enes100.begin("Weigh to go", DEBRIS, 6, 7, 6);
+  // delay(100);
+  // Enes100.begin("Weigh to go", DEBRIS, 6, 7, 6);
 
   // shrug?
   delay(500);
@@ -135,7 +137,7 @@ void setup() {
 
   // Prints location data for 2.5 seconds
   long start = millis();
-  while (millis() - start < 2500) {
+  while (millis() - start < 2000) {
     updateEverything();
   }
 
@@ -145,27 +147,67 @@ void setup() {
 
   // // // Drive to the target close enough.
   driveFar(Enes100.destination.x - DESTINATION_BUFFER_DISTANCE, locY, true);
+  orient(0);
+  if (getColumn(locY) == getColumn(desY)) {
+    int curColumn = getColumn(locY);
+    if (curColumn == 1) {
+      orient(1.57);
+      driveFar(locX, 1.0, false);
+    } else if (curColumn == 2) {
+      orient(-1.57);
+      driveFar(locX, 0.333, false);
+    } else {
+      orient(-1.57);
+      driveFar(locX, 1.0, false);
+    }
+    orient(0);
+  }
+  // driveFar(desX, locY, false);
+  driveClose(desX - locX + 0.05);
+  // driveClose(desX - locX);
+  orient((locY - desY) > 0 ? -1.57 : 1.57);
+  // orient(angleTo(desX, desY));
+  // driveClose((locY - desY > 0 ? locY - desY : desY - locY) - .15);
 
   // Point towards final target.
-  orient((locY - desY) > 0 ? -1.57 : 1.57);
-  driveClose((locY - desY > 0 ? locY - desY : desY - locY));
-  driveClose((locY - desY > 0 ? locY - desY : desY - locY));
+  // orient((locY - desY) > 0 ? -1.57 : 1.57);
+  // driveClose((locY - desY > 0 ? locY - desY : desY - locY));
+  // driveClose((locY - desY > 0 ? locY - desY : desY - locY));
 
-  double perspective = (locT < 0 ? 1 : -1) * (desY > 0 ? -1 : 1);
-  driveClose(perspective * (0.07 / 0.63) * (desY - 1.0 > 0 ? desY - 1.0 : 1.0 - desY));
+  // double perspective = (locT < 0 ? 1 : -1) * (desY > 0 ? -1 : 1);
+  // driveClose(perspective * (0.07 / 0.63) * (desY - 1.0 > 0 ? desY - 1.0 : 1.0 - desY));
   // orient(angleTo(Enes100.destination.x, Enes100.destination.y));
-  orient(0);
+  // orient(0);
+  Enes100.println("Attaching Servo");
+  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
+  myservo.write(91);
+  Enes100.println("Servo Attached");
 
   // LOWER CLAW
+  Enes100.println("Lowering Arm");
+  lowerArm();
+  Enes100.println("Arm Lowered");
+  myservo.write(91);
+  myservo.attach(15);
+  Enes100.println("Measuring Baseline");
   baseline = magneto(5);
+  Enes100.print("Baseline: ");
+  Enes100.println(baseline);
 
   // Drive up close.
-  driveClose(distanceTo(desX, desY) - .14);
-  orient(0);
+  driveClose(distanceTo(desX, desY) - .1);
+  // orient(0);
   updateEverything();
   //RAISE CLAW
+  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
+  myservo.write(91);
+  Enes100.println("Lifting Arm");
+  liftArm();
+  Enes100.println("Arm Lifted");
   Enes100.mission(getWeight(20) - BASE_WEIGHT);
-  if (steelCheck(baseline, magneto(5))) {
+  double measurement = magneto(5);
+  Enes100.println(measurement);
+  if (steelCheck(baseline, measurement)) {
     Enes100.mission(STEEL);
   } else {
     Enes100.mission(COPPER);
@@ -458,8 +500,8 @@ void printStats() {
     Enes100.print(", ");
     Enes100.println(locT);
     Enes100.print("Sensors: ");
-    // Enes100.print(getWeight());
-    // Enes100.print("    ");
+    Enes100.print(getWeight(1));
+    Enes100.print("    ");
     Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
   }
 }
@@ -548,16 +590,16 @@ double find_min_dist(double Mat_Dist[][2]) {
   return min_val;
 }
 
-void retrieve() {
-  Enes100.println("Begin Acceleration Full CW");
-  myServo.writeMicroseconds(1000);
-  delay(2600);
-  myServo.writeMicroseconds(1500);
+// void retrieve() {
+//   Enes100.println("Begin Acceleration Full CW");
+//   myServo.writeMicroseconds(1000);
+//   delay(2600);
+//   myServo.writeMicroseconds(1500);
 
-  myServo.writeMicroseconds(2000);
-  delay(2700);  //Full Stop for 5 seconds
-  myServo.writeMicroseconds(1500);
-}
+//   myServo.writeMicroseconds(2000);
+//   delay(2700);  //Full Stop for 5 seconds
+//   myServo.writeMicroseconds(1500);
+// }
 
 double magneto(int samples) {
   int sumx = 0;
@@ -572,9 +614,42 @@ double magneto(int samples) {
 }
 
 boolean steelCheck(double baseline, double test) {
-  if (abs(abs(baseline) - abs(test)) > abs(3 * baseline)) {
+  if (abs(abs(baseline) - abs(test)) > abs(2500)) {
     return true;
   } else {
     return false;
+  }
+}
+
+void lowerArm() {
+  for (pos = 91; pos <= 95; pos += 1) {  //Accelerates Servo in 50ms increments
+    myservo.write(pos);
+    delay(50);
+  }
+
+  //While loop checks it button is activated
+  int sensorVal = digitalRead(8);  //Read digital port 8
+  while (sensorVal == HIGH) {
+    sensorVal = digitalRead(8);
+  }
+
+  for (pos = 95; pos >= 91; pos -= 1) {
+    myservo.write(pos);
+    delay(20);
+  }
+  myservo.writeMicroseconds(1500);
+}
+
+void liftArm() {
+  for (pos = 91; pos >= 85; pos -= 1) {
+    myservo.write(pos);  // tell servo to go to position in variable 'pos'
+    delay(50);           // waits 15ms for the servo to reach the position
+  }
+  delay(5000);  //CHANGE THIS VALUE TO CHANGE HOW MUCH ELEVATION IS NEEDED. WE DONT HAVE A BUTTON FOR THIS
+                //TEST WITH BATTERY POWER
+
+  for (pos = 85; pos <= 88; pos += 1) {  // Deccelerates to Stop
+    myservo.write(pos);                  // tell servo to go to position in variable 'pos'
+    delay(50);                           // waits 15ms for the servo to reach the position
   }
 }

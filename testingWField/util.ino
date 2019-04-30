@@ -24,3 +24,13 @@ void updateEverything() {
   printStats();
   scale.set_scale(calibration_factor);
 }
+
+int getColumn(double y) {
+  if (y < 0.666) {
+    return 1;
+  } else if (y < 1.333) {
+    return 2;
+  } else {
+    return 3;
+  }
+}
