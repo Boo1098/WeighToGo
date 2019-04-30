@@ -1,4 +1,5 @@
 #include <Adafruit_MotorShield.h>
+#include <DFRobot_QMC5883.h>
 #include <Enes100.h>
 #include <Servo.h>
 #include <Wire.h>
@@ -30,6 +31,8 @@ int pos = 0;
 // I like FUDGE
 #define FUDGE 0
 #define PERSPECTIVE 0.07
+// Weight of claw with nothing on it.
+#define BASE_WEIGHT 0
 
 // Amount of time in ms that each loop waits
 #define LOOP_WAIT 0
@@ -42,6 +45,8 @@ int pos = 0;
 // Load cell pins
 #define DOUT 3
 #define CLK 2
+
+// Low buttons pin 8, 13
 
 // I'm lazy
 #define desX Enes100.destination.x
@@ -64,6 +69,8 @@ Adafruit_DCMotor *backLeftMotor = AFMS.getMotor(4);
 HX711 scale;
 
 Servo myServo;
+DFRobot_QMC5883 compass;
+double baseline;
 
 // Magic
 float calibration_factor = -242;
@@ -107,6 +114,25 @@ void setup() {
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
 
+  // Initialize Initialize QMC5883
+  while (!compass.begin()) {
+    Enes100.println("Could not find a valid QMC5883 sensor, check wiring!");
+    delay(500);
+  }
+  if (compass.isHMC()) {
+    Enes100.println("Initialize HMC5883");
+    compass.setRange(HMC5883L_RANGE_1_3GA);
+    compass.setMeasurementMode(HMC5883L_CONTINOUS);
+    compass.setDataRate(HMC5883L_DATARATE_15HZ);
+    compass.setSamples(HMC5883L_SAMPLES_8);
+  } else if (compass.isQMC()) {
+    Enes100.println("Initialize QMC5883");
+    compass.setRange(QMC5883_RANGE_2GA);
+    compass.setMeasurementMode(QMC5883_CONTINOUS);
+    compass.setDataRate(QMC5883_DATARATE_50HZ);
+    compass.setSamples(QMC5883_SAMPLES_8);
+  }
+
   // Prints location data for 2.5 seconds
   long start = millis();
   while (millis() - start < 2500) {
@@ -130,16 +156,20 @@ void setup() {
   // orient(angleTo(Enes100.destination.x, Enes100.destination.y));
   orient(0);
 
+  // LOWER CLAW
+  baseline = magneto(5);
+
   // Drive up close.
   driveClose(distanceTo(desX, desY) - .14);
   orient(0);
   updateEverything();
-  // orient(angleTo(desX, desY));
-  // myServo.attach(9);
-  // myServo.write(91);
-  // retrieve();
-  // delay(5000);
-  // Enes100.mission(getWeight(50));
+  //RAISE CLAW
+  Enes100.mission(getWeight(20) - BASE_WEIGHT);
+  if (steelCheck(baseline, magneto(5))) {
+    Enes100.mission(STEEL);
+  } else {
+    Enes100.mission(COPPER);
+  }
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -527,4 +557,24 @@ void retrieve() {
   myServo.writeMicroseconds(2000);
   delay(2700);  //Full Stop for 5 seconds
   myServo.writeMicroseconds(1500);
+}
+
+double magneto(int samples) {
+  int sumx = 0;
+  for (int i = 0; i < samples; i++) {
+    Vector mag = compass.readRaw();
+    sumx += mag.ZAxis;
+    delay(500);
+  }
+  sumx /= samples;
+
+  return sumx;
+}
+
+boolean steelCheck(double baseline, double test) {
+  if (abs(abs(baseline) - abs(test)) > abs(3 * baseline)) {
+    return true;
+  } else {
+    return false;
+  }
 }
