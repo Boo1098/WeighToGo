@@ -22,7 +22,7 @@ void updateEverything() {
     updateLocation();
   }
   printStats();
-  scale.set_scale(calibration_factor);
+  // scale.set_scale(calibration_factor);
 }
 
 int getColumn(double y) {

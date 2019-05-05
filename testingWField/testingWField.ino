@@ -11,7 +11,7 @@
 * Setup Constants
 */
 // Debug Prints
-#define DEBUG true
+#define DEBUG false
 // variable to store the servo position
 int pos = 0;
 // Minimum speed required to turn
@@ -32,7 +32,7 @@ int pos = 0;
 #define FUDGE 0
 #define PERSPECTIVE 0.07
 // Weight of claw with nothing on it.
-#define BASE_WEIGHT 30
+#define BASE_WEIGHT 0
 
 // Amount of time in ms that each loop waits
 #define LOOP_WAIT 0
@@ -82,7 +82,7 @@ void setup() {
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 10, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 6, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
 
@@ -96,7 +96,7 @@ void setup() {
 
   // Scale initilizaiton.
   scale.begin(DOUT, CLK);
-  scale.set_scale();
+  scale.set_scale(calibration_factor);
   scale.tare();  //Reset the scale to 0
 
   // print out destination location
@@ -166,6 +166,11 @@ void setup() {
   driveClose(desX - locX + 0.05);
   // driveClose(desX - locX);
   orient((locY - desY) > 0 ? -1.57 : 1.57);
+
+  if (distanceTo(desX, desY) > .3) {
+    driveFar(desX, locY - desY > 0 ? desY + .3 : desY - .3, false);
+    orient((locY - desY) > 0 ? -1.57 : 1.57);
+  }
   // orient(angleTo(desX, desY));
   // driveClose((locY - desY > 0 ? locY - desY : desY - locY) - .15);
 
@@ -184,13 +189,15 @@ void setup() {
   Enes100.println("Servo Attached");
 
   // LOWER CLAW
+  scale.tare();  //Reset the scale to 0
   Enes100.println("Lowering Arm");
   lowerArm();
   Enes100.println("Arm Lowered");
   myservo.write(91);
   myservo.attach(15);
   Enes100.println("Measuring Baseline");
-  baseline = magneto(5);
+  delay(1000);
+  baseline = magneto();
   Enes100.print("Baseline: ");
   Enes100.println(baseline);
 
@@ -199,19 +206,24 @@ void setup() {
   // orient(0);
   updateEverything();
   //RAISE CLAW
+
+  delay(1000);
+
+  double measurement = magneto();
+  Enes100.println(measurement);
+
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
   myservo.write(91);
+
   Enes100.println("Lifting Arm");
   liftArm();
   Enes100.println("Arm Lifted");
-  Enes100.mission(getWeight(20) - BASE_WEIGHT);
-  double measurement = magneto(5);
-  Enes100.println(measurement);
   if (steelCheck(baseline, measurement)) {
     Enes100.mission(STEEL);
   } else {
     Enes100.mission(COPPER);
   }
+  Enes100.mission(getWeight(20) - BASE_WEIGHT);
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -250,9 +262,9 @@ void driveFar(double x, double y, bool obsCheck) {
         oldDist = getUltraDistance(TRIG_PIN, ECHO_PIN);
       }
 
-      if (obsCheck && dist < 100.0) {
-        leftSpeed -= ((100.0 - dist) / 100.0) * (255.0 - MIN_SPEED);
-        rightSpeed -= ((100.0 - dist) / 100.0) * (255.0 - MIN_SPEED);
+      if (obsCheck && dist < 70.0) {
+        leftSpeed -= ((70.0 - dist) / 70.0) * (255.0 - MIN_SPEED);
+        rightSpeed -= ((70.0 - dist) / 70.0) * (255.0 - MIN_SPEED);
       }
 
       // Prints error
@@ -601,20 +613,15 @@ double find_min_dist(double Mat_Dist[][2]) {
 //   myServo.writeMicroseconds(1500);
 // }
 
-double magneto(int samples) {
-  int sumx = 0;
-  for (int i = 0; i < samples; i++) {
-    Vector mag = compass.readRaw();
-    sumx += mag.ZAxis;
-    delay(500);
-  }
-  sumx /= samples;
+double magneto() {
+  Vector mag = compass.readRaw();
 
-  return sumx;
+  return mag.YAxis;
 }
 
 boolean steelCheck(double baseline, double test) {
-  if (abs(abs(baseline) - abs(test)) > abs(2500)) {
+  Enes100.println(baseline - test);
+  if (baseline - test > 800 || baseline - test < -800) {
     return true;
   } else {
     return false;
@@ -645,7 +652,7 @@ void liftArm() {
     myservo.write(pos);  // tell servo to go to position in variable 'pos'
     delay(50);           // waits 15ms for the servo to reach the position
   }
-  delay(5000);  //CHANGE THIS VALUE TO CHANGE HOW MUCH ELEVATION IS NEEDED. WE DONT HAVE A BUTTON FOR THIS
+  delay(7000);  //CHANGE THIS VALUE TO CHANGE HOW MUCH ELEVATION IS NEEDED. WE DONT HAVE A BUTTON FOR THIS
                 //TEST WITH BATTERY POWER
 
   for (pos = 85; pos <= 88; pos += 1) {  // Deccelerates to Stop
