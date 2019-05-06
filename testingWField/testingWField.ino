@@ -11,13 +11,13 @@
 * Setup Constants
 */
 // Debug Prints
-#define DEBUG false
+#define DEBUG true
 // variable to store the servo position
 int pos = 0;
 // Minimum speed required to turn
 #define MIN_SPEED_TURN 45.0
 // Distance in centimeters that triggers obstacle
-#define OBSTACLE_TRIGGER_DISTANCE 9.5
+#define OBSTACLE_TRIGGER_DISTANCE 10.0
 // Distance we want the far navigation to end up from the mission site
 #define DESTINATION_BUFFER_DISTANCE 0.25
 // Max speed of OSV. Not currently implemented
@@ -27,7 +27,7 @@ int pos = 0;
 // Proportional factor for driveFar corrections
 #define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
 // Proportional factor for orient corrections
-#define ORIENT_kP ((255.0 - MIN_SPEED_TURN) * 2.0 / 3.14)
+#define ORIENT_kP ((255.0 - MIN_SPEED_TURN) * 3.0 / 3.14)
 // I like FUDGE
 #define FUDGE 0
 #define PERSPECTIVE 0.07
@@ -76,13 +76,15 @@ double baseline;
 float calibration_factor = -242;
 
 void setup() {
+  // Limit Switch Setup
   pinMode(8, INPUT_PULLUP);
+  pinMode(13, INPUT_PULLUP);
 
   delay(10000);
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 6, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 7, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
 
@@ -93,11 +95,6 @@ void setup() {
   delay(500);
 
   Enes100.println("Connected!");
-
-  // Scale initilizaiton.
-  scale.begin(DOUT, CLK);
-  scale.set_scale(calibration_factor);
-  scale.tare();  //Reset the scale to 0
 
   // print out destination location
   Enes100.print("Destination is at (");
@@ -162,14 +159,25 @@ void setup() {
     }
     orient(0);
   }
+
+  if (getColumn(locY) == 1 && getColumn(desY) == 3) {
+    orient(1.57);
+    driveFar(locX, 1, false);
+  } else if (getColumn(locY) == 3 && getColumn(desY) == 3) {
+    orient(-1.57);
+    driveFar(locX, 1, false);
+  }
+  orient(0);
+
   // driveFar(desX, locY, false);
-  driveClose(desX - locX + 0.05);
+  driveClose(desX - locX + 0.08);
   // driveClose(desX - locX);
   orient((locY - desY) > 0 ? -1.57 : 1.57);
 
-  if (distanceTo(desX, desY) > .3) {
-    driveFar(desX, locY - desY > 0 ? desY + .3 : desY - .3, false);
+  if (distanceTo(desX, desY) > .5) {
+    driveFar(desX, locY - desY > 0 ? desY + .5 : desY - .5, false);
     orient((locY - desY) > 0 ? -1.57 : 1.57);
+    // orient(angleTo(desX, desY));
   }
   // orient(angleTo(desX, desY));
   // driveClose((locY - desY > 0 ? locY - desY : desY - locY) - .15);
@@ -188,8 +196,15 @@ void setup() {
   myservo.write(91);
   Enes100.println("Servo Attached");
 
-  // LOWER CLAW
+  delay(2000);
+
+  // Scale initilizaiton.
+  scale.begin(DOUT, CLK);
+  scale.set_scale(calibration_factor);
   scale.tare();  //Reset the scale to 0
+
+  delay(2000);
+
   Enes100.println("Lowering Arm");
   lowerArm();
   Enes100.println("Arm Lowered");
@@ -202,7 +217,7 @@ void setup() {
   Enes100.println(baseline);
 
   // Drive up close.
-  driveClose(distanceTo(desX, desY) - .1);
+  driveClose(distanceTo(desX, desY) - .13);
   // orient(0);
   updateEverything();
   //RAISE CLAW
@@ -218,12 +233,14 @@ void setup() {
   Enes100.println("Lifting Arm");
   liftArm();
   Enes100.println("Arm Lifted");
+  delay(1000);
   if (steelCheck(baseline, measurement)) {
     Enes100.mission(STEEL);
   } else {
     Enes100.mission(COPPER);
   }
-  Enes100.mission(getWeight(20) - BASE_WEIGHT);
+  Enes100.println(getWeight(20));
+  Enes100.mission(getWeight(20));
 }
 
 // Drives to a point on the field with obstacle avoidance if obsCheck = true.
@@ -615,13 +632,13 @@ double find_min_dist(double Mat_Dist[][2]) {
 
 double magneto() {
   Vector mag = compass.readRaw();
-
+  delay(500);
   return mag.YAxis;
 }
 
 boolean steelCheck(double baseline, double test) {
   Enes100.println(baseline - test);
-  if (baseline - test > 800 || baseline - test < -800) {
+  if (fabs(baseline - test) > 2000) {
     return true;
   } else {
     return false;
@@ -648,15 +665,22 @@ void lowerArm() {
 }
 
 void liftArm() {
-  for (pos = 91; pos >= 85; pos -= 1) {
+  for (pos = 91; pos >= 81; pos -= 1)  //Accelerates to full CW
+  {
     myservo.write(pos);  // tell servo to go to position in variable 'pos'
     delay(50);           // waits 15ms for the servo to reach the position
   }
-  delay(7000);  //CHANGE THIS VALUE TO CHANGE HOW MUCH ELEVATION IS NEEDED. WE DONT HAVE A BUTTON FOR THIS
-                //TEST WITH BATTERY POWER
 
-  for (pos = 85; pos <= 88; pos += 1) {  // Deccelerates to Stop
-    myservo.write(pos);                  // tell servo to go to position in variable 'pos'
-    delay(50);                           // waits 15ms for the servo to reach the position
+  int sensorVal2 = digitalRead(13);
+  while (sensorVal2 == HIGH) {  //MAYBE USE HIGH OR LOW INSTEAD OF 1
+    sensorVal2 = digitalRead(13);
+    if (sensorVal2 == LOW) {
+      Serial.println("Button Triggered!");
+      for (pos = 81; pos <= 88; pos += 1) {
+        myservo.write(pos);  // tell servo to go to position in variable 'pos'
+        delay(10);           // waits 15ms for the servo to reach the position
+      }
+      break;  //Break from loop for safe measure
+    }
   }
 }
