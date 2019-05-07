@@ -11,19 +11,19 @@
 * Setup Constants
 */
 // Debug Prints
-#define DEBUG true
+#define DEBUG false
 // variable to store the servo position
 int pos = 0;
 // Minimum speed required to turn
 #define MIN_SPEED_TURN 45.0
 // Distance in centimeters that triggers obstacle
-#define OBSTACLE_TRIGGER_DISTANCE 10.0
+#define OBSTACLE_TRIGGER_DISTANCE 11.0
 // Distance we want the far navigation to end up from the mission site
 #define DESTINATION_BUFFER_DISTANCE 0.25
 // Max speed of OSV. Not currently implemented
 #define MAX_SPEED 255.0
 // Minimum speed OSV requires to move forwards
-#define MIN_SPEED 20.0
+#define MIN_SPEED 30.0
 // Proportional factor for driveFar corrections
 #define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
 // Proportional factor for orient corrections
@@ -84,7 +84,7 @@ void setup() {
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 7, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 6, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
 
@@ -137,6 +137,15 @@ void setup() {
   while (millis() - start < 2000) {
     updateEverything();
   }
+  // Scale initilizaiton.
+  scale.begin(DOUT, CLK);
+  scale.set_scale(calibration_factor);
+  scale.tare();  //Reset the scale to 0
+
+  myservo.attach(9);
+  myservo.write(91);
+  liftArm();
+  myservo.attach(15);
 
   // Moves OSV to one of the three colunms.
   startUp();
@@ -170,14 +179,17 @@ void setup() {
   orient(0);
 
   // driveFar(desX, locY, false);
-  driveClose(desX - locX + 0.08);
+  driveClose(desX - locX + 0.06);
   // driveClose(desX - locX);
   orient((locY - desY) > 0 ? -1.57 : 1.57);
 
-  if (distanceTo(desX, desY) > .5) {
-    driveFar(desX, locY - desY > 0 ? desY + .5 : desY - .5, false);
-    orient((locY - desY) > 0 ? -1.57 : 1.57);
-    // orient(angleTo(desX, desY));
+  // if (distanceTo(desX, desY) > .5) {
+  //   driveFar(desX, locY - desY > 0 ? desY + .5 : desY - .5, false);
+  //   orient((locY - desY) > 0 ? -1.57 : 1.57);
+  //   // orient(angleTo(desX, desY));
+  // }
+  if (distanceTo(desX, desY) < .10) {
+    driveClose(-.1);
   }
   // orient(angleTo(desX, desY));
   // driveClose((locY - desY > 0 ? locY - desY : desY - locY) - .15);
@@ -195,13 +207,6 @@ void setup() {
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
   myservo.write(91);
   Enes100.println("Servo Attached");
-
-  delay(2000);
-
-  // Scale initilizaiton.
-  scale.begin(DOUT, CLK);
-  scale.set_scale(calibration_factor);
-  scale.tare();  //Reset the scale to 0
 
   delay(2000);
 
@@ -233,6 +238,7 @@ void setup() {
   Enes100.println("Lifting Arm");
   liftArm();
   Enes100.println("Arm Lifted");
+  lowerArm2();
   delay(1000);
   if (steelCheck(baseline, measurement)) {
     Enes100.mission(STEEL);
@@ -279,9 +285,9 @@ void driveFar(double x, double y, bool obsCheck) {
         oldDist = getUltraDistance(TRIG_PIN, ECHO_PIN);
       }
 
-      if (obsCheck && dist < 70.0) {
-        leftSpeed -= ((70.0 - dist) / 70.0) * (255.0 - MIN_SPEED);
-        rightSpeed -= ((70.0 - dist) / 70.0) * (255.0 - MIN_SPEED);
+      if (obsCheck && dist < 50.0) {
+        leftSpeed -= ((50.0 - dist) / 50.0) * (255.0 - MIN_SPEED);
+        rightSpeed -= ((50.0 - dist) / 50.0) * (255.0 - MIN_SPEED);
       }
 
       // Prints error
@@ -638,7 +644,7 @@ double magneto() {
 
 boolean steelCheck(double baseline, double test) {
   Enes100.println(baseline - test);
-  if (fabs(baseline - test) > 2000) {
+  if (fabs(baseline - test) > 3000) {
     return true;
   } else {
     return false;
@@ -676,11 +682,22 @@ void liftArm() {
     sensorVal2 = digitalRead(13);
     if (sensorVal2 == LOW) {
       Serial.println("Button Triggered!");
-      for (pos = 81; pos <= 88; pos += 1) {
+      for (pos = 81; pos <= 91; pos += 1) {
         myservo.write(pos);  // tell servo to go to position in variable 'pos'
         delay(10);           // waits 15ms for the servo to reach the position
       }
       break;  //Break from loop for safe measure
     }
+  }
+}
+void lowerArm2() {
+  for (pos = 91; pos <= 93; pos += 1) {  //Accelerates Servo in 50ms increments
+    myservo.write(pos);
+    delay(20);
+  }
+  // delay(500);
+  for (pos = 93; pos >= 88; pos -= 1) {  //Accelerates Servo in 50ms increments
+    myservo.write(pos);
+    delay(20);
   }
 }
