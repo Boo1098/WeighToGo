@@ -142,6 +142,7 @@ void setup() {
   scale.set_scale(calibration_factor);
   scale.tare();  //Reset the scale to 0
 
+  // Make sure arm is lifted all the way
   myservo.attach(9);
   myservo.write(91);
   liftArm();
@@ -149,11 +150,11 @@ void setup() {
 
   // Moves OSV to one of the three colunms.
   startUp();
-  // orient(0);
 
-  // // // Drive to the target close enough.
+  // Drive to the target close enough.
   driveFar(Enes100.destination.x - DESTINATION_BUFFER_DISTANCE, locY, true);
-  orient(0);
+  
+  // Makes sure OSV does not run over debris by moving to different column
   if (getColumn(locY) == getColumn(desY)) {
     int curColumn = getColumn(locY);
     if (curColumn == 1) {
@@ -166,9 +167,10 @@ void setup() {
       orient(-1.57);
       driveFar(locX, 1.0, false);
     }
-    orient(0);
   }
+  orient(0);
 
+  // Moves closer in case debris is two columns over
   if (getColumn(locY) == 1 && getColumn(desY) == 3) {
     orient(1.57);
     driveFar(locX, 1, false);
@@ -178,74 +180,69 @@ void setup() {
   }
   orient(0);
 
-  // driveFar(desX, locY, false);
+  // Line up with debris on y-axis
   driveClose(desX - locX + 0.06);
-  // driveClose(desX - locX);
+
+  // Point towards debris
   orient((locY - desY) > 0 ? -1.57 : 1.57);
 
-  // if (distanceTo(desX, desY) > .5) {
-  //   driveFar(desX, locY - desY > 0 ? desY + .5 : desY - .5, false);
-  //   orient((locY - desY) > 0 ? -1.57 : 1.57);
-  //   // orient(angleTo(desX, desY));
-  // }
-  if (distanceTo(desX, desY) < .10) {
-    driveClose(-.1);
+  // Back up if too close
+  if (distanceTo(desX, desY) < .15) {
+    driveClose(-0.1);
   }
-  // orient(angleTo(desX, desY));
-  // driveClose((locY - desY > 0 ? locY - desY : desY - locY) - .15);
 
-  // Point towards final target.
-  // orient((locY - desY) > 0 ? -1.57 : 1.57);
-  // driveClose((locY - desY > 0 ? locY - desY : desY - locY));
-  // driveClose((locY - desY > 0 ? locY - desY : desY - locY));
-
-  // double perspective = (locT < 0 ? 1 : -1) * (desY > 0 ? -1 : 1);
-  // driveClose(perspective * (0.07 / 0.63) * (desY - 1.0 > 0 ? desY - 1.0 : 1.0 - desY));
-  // orient(angleTo(Enes100.destination.x, Enes100.destination.y));
-  // orient(0);
+  // ReAttach Servo
   Enes100.println("Attaching Servo");
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
   myservo.write(91);
   Enes100.println("Servo Attached");
 
-  delay(2000);
-
+  // Lower Arm
   Enes100.println("Lowering Arm");
   lowerArm();
   Enes100.println("Arm Lowered");
+
+  // UnAttach Servo
   myservo.write(91);
   myservo.attach(15);
+
+  // Measure magneto baseline
   Enes100.println("Measuring Baseline");
   delay(1000);
   baseline = magneto();
   Enes100.print("Baseline: ");
   Enes100.println(baseline);
 
-  // Drive up close.
+  // Drive up close
   driveClose(distanceTo(desX, desY) - .13);
-  // orient(0);
   updateEverything();
-  //RAISE CLAW
 
-  delay(1000);
-
+  // Take magneto measuring now that debris is loaded
   double measurement = magneto();
   Enes100.println(measurement);
 
+  // Reattach Servo
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
   myservo.write(91);
 
+  // Lift arm
   Enes100.println("Lifting Arm");
   liftArm();
   Enes100.println("Arm Lifted");
+
+  // Drop arm just a little bit.
   lowerArm2();
   delay(1000);
+
+  // Return if debris is steel or copper
   if (steelCheck(baseline, measurement)) {
     Enes100.mission(STEEL);
   } else {
     Enes100.mission(COPPER);
   }
-  Enes100.println(getWeight(20));
+
+  // Return measured weight
+  delay(2000);
   Enes100.mission(getWeight(20));
 }
 
