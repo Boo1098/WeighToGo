@@ -27,12 +27,14 @@ int pos = 0;
 // Proportional factor for driveFar corrections
 #define DRIVE_FAR_kP 255.0 * 5.0 / 3.14
 // Proportional factor for orient corrections
-#define ORIENT_kP ((255.0 - MIN_SPEED_TURN) * 3.0 / 3.14)
+#define ORIENT_kP ((255.0 - MIN_SPEED_TURN) * 2.0 / 3.14)
 // I like FUDGE
 #define FUDGE 0
 #define PERSPECTIVE 0.07
 // Weight of claw with nothing on it.
 #define BASE_WEIGHT 0
+// Distance away to approach
+#define APPROACH_DIST 0.3
 
 // Amount of time in ms that each loop waits
 #define LOOP_WAIT 0
@@ -151,31 +153,34 @@ void setup() {
 
   // Drive to the target close enough.
   driveFar(Enes100.destination.x - DESTINATION_BUFFER_DISTANCE, locY, true);
-  
-  // Makes sure OSV does not run over debris by moving to different column
-  if (getColumn(locY) == getColumn(desY)) {
-    int curColumn = getColumn(locY);
-    if (curColumn == 1) {
-      orient(1.57);
-      driveFar(locX, 1.0, false);
-    } else if (curColumn == 2) {
-      orient(-1.57);
-      driveFar(locX, 0.333, false);
-    } else {
-      orient(-1.57);
-      driveFar(locX, 1.0, false);
-    }
-  }
-  orient(0);
 
-  // Moves closer in case debris is two columns over
-  if (getColumn(locY) == 1 && getColumn(desY) == 3) {
-    orient(1.57);
-    driveFar(locX, 1, false);
-  } else if (getColumn(locY) == 3 && getColumn(desY) == 3) {
-    orient(-1.57);
-    driveFar(locX, 1, false);
-  }
+  // Makes sure OSV does not run over debris by moving to different column
+  // if (getColumn(locY) == getColumn(desY)) {
+  //   int curColumn = getColumn(locY);
+  //   if (curColumn == 1) {
+  //     orient(1.57);
+  //     driveFar(locX, 1.0, false);
+  //   } else if (curColumn == 2) {
+  //     orient(-1.57);
+  //     driveFar(locX, 0.333, false);
+  //   } else {
+  //     orient(-1.57);
+  //     driveFar(locX, 1.0, false);
+  //   }
+  // }
+  // orient(0);
+
+  // // Moves closer in case debris is two columns over
+  // if (getColumn(locY) == 1 && getColumn(desY) == 3) {
+  //   orient(1.57);
+  //   driveFar(locX, 1, false);
+  // } else if (getColumn(locY) == 3 && getColumn(desY) == 3) {
+  //   orient(-1.57);
+  //   driveFar(locX, 1, false);
+  //}
+  double targetY = getColumn(desY) == 1 ? desY + APPROACH_DIST : desY - APPROACH_DIST;
+  orient((locY - targetY) > 0 ? -1.57 : 1.57);
+  driveFar(locX, targetY, false);
   orient(0);
 
   // Line up with debris on y-axis
@@ -185,8 +190,8 @@ void setup() {
   orient((locY - desY) > 0 ? -1.57 : 1.57);
 
   // Back up if too close
-  if (distanceTo(desX, desY) < .15) {
-    driveClose(-0.1);
+  if (distanceTo(desX, desY) < .40) {
+    driveClose(-(.4 - distanceTo(desX, desY)));
   }
 
   // ReAttach Servo
@@ -438,7 +443,7 @@ void orient(double t) {
       setMotorSpeed(0, 0);
     } else {
       // Calculate speed to spin at based on error.
-      double output = abs(error) * ORIENT_kP + MIN_SPEED_TURN;
+      double output = fabs(error) * ORIENT_kP + MIN_SPEED_TURN;
 
       // Limits output to max of 255
       if (output > 255) {
@@ -691,7 +696,7 @@ void lowerArm2() {
     myservo.write(pos);
     delay(20);
   }
-  // delay(500);
+  delay(50);
   for (pos = 93; pos >= 88; pos -= 1) {  //Accelerates Servo in 50ms increments
     myservo.write(pos);
     delay(20);
