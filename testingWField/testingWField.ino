@@ -46,8 +46,6 @@ int pos = 0;
 #define DOUT 3
 #define CLK 2
 
-// Low buttons pin 8, 13
-
 // I'm lazy
 #define desX Enes100.destination.x
 #define desY Enes100.destination.y
@@ -275,13 +273,14 @@ void driveFar(double x, double y, bool obsCheck) {
         atheta *= -1.0;
       }
 
-      // Robot slows down as it gets closer to obstacle.
+      // Removes extraneous values
       double dist = getUltraDistance(TRIG_PIN, ECHO_PIN);
-      if ((dist - oldDist) > 100.0 || (oldDist - dist) > 100.0) {
+      if ((dist - oldDist) > 80.0 || (oldDist - dist) > 80.0) {
         dist = oldDist;
         oldDist = getUltraDistance(TRIG_PIN, ECHO_PIN);
       }
 
+      // Robot slows down as it gets closer to obstacle.
       if (obsCheck && dist < 50.0) {
         leftSpeed -= ((50.0 - dist) / 50.0) * (255.0 - MIN_SPEED);
         rightSpeed -= ((50.0 - dist) / 50.0) * (255.0 - MIN_SPEED);
