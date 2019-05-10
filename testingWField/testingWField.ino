@@ -17,7 +17,7 @@ int pos = 0;
 // Minimum speed required to turn
 #define MIN_SPEED_TURN 45.0
 // Distance in centimeters that triggers obstacle
-#define OBSTACLE_TRIGGER_DISTANCE 11.0
+#define OBSTACLE_TRIGGER_DISTANCE 11.5
 // Distance we want the far navigation to end up from the mission site
 #define DESTINATION_BUFFER_DISTANCE 0.25
 // Max speed of OSV. Not currently implemented
@@ -34,7 +34,7 @@ int pos = 0;
 // Weight of claw with nothing on it.
 #define BASE_WEIGHT 0
 // Distance away to approach
-#define APPROACH_DIST 0.3
+#define APPROACH_DIST 0.5
 
 // Amount of time in ms that each loop waits
 #define LOOP_WAIT 0
@@ -84,7 +84,7 @@ void setup() {
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 6, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 13, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
 
@@ -130,6 +130,7 @@ void setup() {
     compass.setMeasurementMode(QMC5883_CONTINOUS);
     compass.setDataRate(QMC5883_DATARATE_50HZ);
     compass.setSamples(QMC5883_SAMPLES_8);
+    Enes100.println("Initialized QMC5883");
   }
 
   // Prints location data for 2.5 seconds
@@ -137,10 +138,12 @@ void setup() {
   while (millis() - start < 2000) {
     updateEverything();
   }
+  Enes100.println("Initializing scale");
   // Scale initilizaiton.
   scale.begin(DOUT, CLK);
   scale.set_scale(calibration_factor);
   scale.tare();  //Reset the scale to 0
+  Enes100.println("Scale Initialized");
 
   // Make sure arm is lifted all the way
   myservo.attach(9);
@@ -190,8 +193,8 @@ void setup() {
   orient((locY - desY) > 0 ? -1.57 : 1.57);
 
   // Back up if too close
-  if (distanceTo(desX, desY) < .40) {
-    driveClose(-(.4 - distanceTo(desX, desY)));
+  if (distanceTo(desX, desY) < .50) {
+    driveClose(-(.5 - distanceTo(desX, desY)));
   }
 
   // ReAttach Servo
@@ -234,7 +237,7 @@ void setup() {
   Enes100.println("Arm Lifted");
 
   // Drop arm just a little bit.
-  lowerArm2();
+  // lowerArm2();
   delay(1000);
 
   // Return if debris is steel or copper
@@ -645,7 +648,7 @@ double magneto() {
 
 boolean steelCheck(double baseline, double test) {
   Enes100.println(baseline - test);
-  if (fabs(baseline - test) > 3000) {
+  if (fabs(baseline - test) > 1500) {
     return true;
   } else {
     return false;
@@ -683,7 +686,7 @@ void liftArm() {
     sensorVal2 = digitalRead(13);
     if (sensorVal2 == LOW) {
       Serial.println("Button Triggered!");
-      for (pos = 81; pos <= 91; pos += 1) {
+      for (pos = 81; pos <= 87; pos += 1) {
         myservo.write(pos);  // tell servo to go to position in variable 'pos'
         delay(10);           // waits 15ms for the servo to reach the position
       }
@@ -697,7 +700,7 @@ void lowerArm2() {
     delay(20);
   }
   delay(50);
-  for (pos = 93; pos >= 88; pos -= 1) {  //Accelerates Servo in 50ms increments
+  for (pos = 93; pos >= 87; pos -= 1) {  //Accelerates Servo in 50ms increments
     myservo.write(pos);
     delay(20);
   }
