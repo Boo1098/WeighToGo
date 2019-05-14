@@ -84,7 +84,7 @@ void setup() {
 
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
-  while (!Enes100.begin("Weigh to go", DEBRIS, 13, 7, 6)) {
+  while (!Enes100.begin("Weigh to go", DEBRIS, 9, 7, 6)) {
     // Eprintln("Waiting for Connection.");
   }
 
