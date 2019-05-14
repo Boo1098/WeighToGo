@@ -36,9 +36,6 @@ int pos = 0;
 // Distance away to approach
 #define APPROACH_DIST 0.5
 
-// Amount of time in ms that each loop waits
-#define LOOP_WAIT 0
-
 // Trigger pin of ultrasonic sensor
 #define TRIG_PIN 12
 // Echo pin of ultrasonic sensor
@@ -206,7 +203,6 @@ void setup() {
   Enes100.println("Arm Lifted");
 
   // Drop arm just a little bit.
-  // lowerArm2();
   delay(1000);
 
   // Return if debris is steel or copper
@@ -370,7 +366,6 @@ void avoidObstacle() {
   double newY = locY > 1.333 || locY < 0.666 ? 1 : locY > 1 ? 1.666 : 0.333;
   double middleY = locY > 1 ? 1.333 : 0.666;
   orient(locY > 1.333 || (locY < 1 && locY > 0.666) ? -1.57 : 1.57);
-  // driveFar(locX, middleY, false);
   driveFar(locX, newY, false);
 
   // Re-orient forwards.
@@ -429,9 +424,6 @@ void orient(double t) {
         setMotorSpeed((int)-output, (int)output);
       }
     }
-
-    // Delay for reasons.
-    delay(LOOP_WAIT);
   }
 }
 
