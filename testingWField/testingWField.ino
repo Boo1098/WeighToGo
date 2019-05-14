@@ -85,11 +85,7 @@ void setup() {
   // Wait for connection to vision system.
   // Team Name, Mission Type, Marker ID, RX Pin, TX Pin
   while (!Enes100.begin("Weigh to go", DEBRIS, 9, 7, 6)) {
-    // Eprintln("Waiting for Connection.");
   }
-
-  // delay(100);
-  // Enes100.begin("Weigh to go", DEBRIS, 6, 7, 6);
 
   // shrug?
   delay(500);
@@ -106,9 +102,6 @@ void setup() {
   // Set pin modes of ultrasonic sensor
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
-
-  // myServo.attach(9);
-  // myServo.write(91);
 
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
@@ -157,30 +150,6 @@ void setup() {
   // Drive to the target close enough.
   driveFar(Enes100.destination.x - DESTINATION_BUFFER_DISTANCE, locY, true);
 
-  // Makes sure OSV does not run over debris by moving to different column
-  // if (getColumn(locY) == getColumn(desY)) {
-  //   int curColumn = getColumn(locY);
-  //   if (curColumn == 1) {
-  //     orient(1.57);
-  //     driveFar(locX, 1.0, false);
-  //   } else if (curColumn == 2) {
-  //     orient(-1.57);
-  //     driveFar(locX, 0.333, false);
-  //   } else {
-  //     orient(-1.57);
-  //     driveFar(locX, 1.0, false);
-  //   }
-  // }
-  // orient(0);
-
-  // // Moves closer in case debris is two columns over
-  // if (getColumn(locY) == 1 && getColumn(desY) == 3) {
-  //   orient(1.57);
-  //   driveFar(locX, 1, false);
-  // } else if (getColumn(locY) == 3 && getColumn(desY) == 3) {
-  //   orient(-1.57);
-  //   driveFar(locX, 1, false);
-  //}
   double targetY = getColumn(desY) == 1 ? desY + APPROACH_DIST : desY - APPROACH_DIST;
   orient((locY - targetY) > 0 ? -1.57 : 1.57);
   driveFar(locX, targetY, false);
@@ -333,9 +302,6 @@ void driveFar(double x, double y, bool obsCheck) {
       }
       setMotorSpeed(leftSpeed, rightSpeed);
     }
-
-    // Delay for reasons?
-    // delay(LOOP_WAIT);
   }
 }
 
@@ -368,9 +334,6 @@ void driveClose(double dist) {
       rightSpeed = 0;
     }
     setMotorSpeed(leftSpeed, rightSpeed);
-
-    // Delay for reasons?
-    // delay(LOOP_WAIT);
   }
 }
 
@@ -518,21 +481,6 @@ double getWeight(int samples) {
 void printStats() {
   if (DEBUG) {
     Enes100.print("Location: ");
-    // if (locX < 0.65) {
-    //   Enes100.print("Landing Zone, ");
-    // } else if (locX < 1.25) {
-    //   Enes100.print("Rocky Terrain, ");
-    // } else {
-    //   Enes100.print("Obstacle Zone, ");
-    // }
-    // if (locY < .666) {
-    //   Enes100.println("Bottom Column");
-    // } else if (locY < 1.333) {
-    //   Enes100.println("Middle Column");
-    // } else {
-    //   Enes100.println("Top Column");
-    // }
-
     Enes100.print(locX);
     Enes100.print(", ");
     Enes100.print(locY);
@@ -544,101 +492,6 @@ void printStats() {
     Enes100.println(getUltraDistance(TRIG_PIN, ECHO_PIN));
   }
 }
-
-void Near_Field_Nav() {
-  double Mat_Dist[60][2];
-  Fill_Array(Mat_Dist);
-  double minimum_angle = find_min_angle(Mat_Dist);
-  double minimum_dist = find_min_dist(Mat_Dist);
-  Enes100.print("Minimum Distance: ");
-  Enes100.println(minimum_dist);
-  if (minimum_angle == -999) {
-    Enes100.println("Unable to detect debris. REORIENTING!");
-    updateEverything();
-    orient(locY > 1 ? 1.57 : -1.57);
-    driveClose(distanceTo(desX, desY) * sqrt(3.0));
-    orient(angleTo(desX, desY));
-    driveClose(distanceTo(desX, desY) - DESTINATION_BUFFER_DISTANCE);
-    Near_Field_Nav();
-    return;
-  }
-  Enes100.print("Minimum Angle: ");
-  Enes100.println(minimum_angle);
-  orient(minimum_angle + FUDGE);
-  // long t = ((minimum - 7.0) / 2.0) * 1000;
-  // long start = millis();
-  while (getUltraDistance(TRIG_PIN, ECHO_PIN) > 9.5) {
-    // while (millis() - start <= t) {
-    setMotorSpeed(50, 50);
-  }
-  setMotorSpeed(0, 0);
-}
-
-void Fill_Array(double Mat_Dist[][2]) {
-  // for (int i = 0; i < 20; i++) {
-  //   orient(locT + (.02));
-  //   Mat_Dist[i][0] = locT;
-  //   Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
-  //   Enes100.print("Measurement: ");
-  //   Enes100.print(Mat_Dist[i][0]);
-  //   Enes100.print(", ");
-  //   Enes100.println(Mat_Dist[i][1]);
-  // }
-  orient(locT + .01 * 30.0);
-  for (int i = 0; i < 60; i++) {
-    orient(locT - (.01));
-    Mat_Dist[i][0] = locT;
-    Mat_Dist[i][1] = getUltraDistance(TRIG_PIN, ECHO_PIN);
-    Enes100.print("Measurement: ");
-    Enes100.print(Mat_Dist[i][0]);
-    Enes100.print(", ");
-    Enes100.println(Mat_Dist[i][1]);
-  }
-}
-
-double find_min_angle(double Mat_Dist[][2]) {
-  double min_val1 = DESTINATION_BUFFER_DISTANCE * 1.5 * 100.0;
-  double min_loc1 = -999;
-  double min_val2 = DESTINATION_BUFFER_DISTANCE * 1.5 * 100.0;
-  double min_loc2 = -999;
-  for (int i = 0; i < 60; i++) {
-    if (Mat_Dist[i][1] < min_val1) {
-      min_val1 = Mat_Dist[i][1];
-      min_loc1 = Mat_Dist[i][0];
-    }
-    break;
-  }
-  for (int i = 59; i >= 0; i--) {
-    if (Mat_Dist[i][1] < min_val2) {
-      min_val2 = Mat_Dist[i][1];
-      min_loc2 = Mat_Dist[i][0];
-    }
-    break;
-  }
-  return (min_loc1 + min_loc2) / 2;
-}
-double find_min_dist(double Mat_Dist[][2]) {
-  double min_val = 30;
-  double min_loc = 0;
-  for (int i = 0; i < 60; i++) {
-    if (Mat_Dist[i][1] < min_val) {
-      min_val = Mat_Dist[i][1];
-      min_loc = Mat_Dist[i][0];
-    }
-  }
-  return min_val;
-}
-
-// void retrieve() {
-//   Enes100.println("Begin Acceleration Full CW");
-//   myServo.writeMicroseconds(1000);
-//   delay(2600);
-//   myServo.writeMicroseconds(1500);
-
-//   myServo.writeMicroseconds(2000);
-//   delay(2700);  //Full Stop for 5 seconds
-//   myServo.writeMicroseconds(1500);
-// }
 
 double magneto() {
   Vector mag = compass.readRaw();
@@ -692,16 +545,5 @@ void liftArm() {
       }
       break;  //Break from loop for safe measure
     }
-  }
-}
-void lowerArm2() {
-  for (pos = 91; pos <= 93; pos += 1) {  //Accelerates Servo in 50ms increments
-    myservo.write(pos);
-    delay(20);
-  }
-  delay(50);
-  for (pos = 93; pos >= 87; pos -= 1) {  //Accelerates Servo in 50ms increments
-    myservo.write(pos);
-    delay(20);
   }
 }
