@@ -155,6 +155,7 @@ void bootUp() {
   pinMode(LOWER_LIMIT_SWITCH, INPUT_PULLUP);
   pinMode(UPPER_LIMIT_SWITCH, INPUT_PULLUP);
 
+  // Ten second wait because of issues
   delay(10000);
 
   // Wait for connection to vision system.
@@ -162,7 +163,6 @@ void bootUp() {
   while (!Enes100.begin("Weigh to go", DEBRIS, 9, 7, 6)) {
   }
 
-  // shrug?
   delay(500);
 
   Enes100.println("Connected!");
@@ -181,7 +181,7 @@ void bootUp() {
   // Start Motor Controller.
   AFMS.begin();  // create with the default frequency 1.6KHz
 
-  // Initialize Initialize QMC5883
+  // Initialize Initialize QMC5883 (Magnetometer)
   while (!compass.begin()) {
     Enes100.println("Could not find a valid QMC5883 sensor, check wiring!");
     delay(500);
@@ -206,6 +206,7 @@ void bootUp() {
   while (millis() - start < 2000) {
     updateEverything();
   }
+
   Enes100.println("Initializing scale");
   // Scale initilizaiton.
   scale.begin(DOUT, CLK);
@@ -214,7 +215,7 @@ void bootUp() {
   Enes100.println("Scale Initialized");
 }
 
-// Drives to a point on the field with obstacle avoidance if obsCheck = true.
+// Drives to a point on the field (x,y) with obstacle avoidance if obsCheck = true.
 void driveFar(double x, double y, bool obsCheck) {
   Enes100.print("Driving to ");
   Enes100.print(x);
