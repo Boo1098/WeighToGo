@@ -92,7 +92,7 @@ void setup() {
   driveFar(Enes100.destination.x - DESTINATION_BUFFER_DISTANCE, locY, true);
 
   // Move to be above or below target by APPROACH_DIST meters
-  double targetY = getColumn(desY) == 1 ? desY + APPROACH_DIST : desY - APPROACH_DIST;
+  double targetY = getRow(desY) == 1 ? desY + APPROACH_DIST : desY - APPROACH_DIST;
   orient((locY - targetY) > 0 ? -1.57 : 1.57);
   driveFar(locX, targetY, false);
   orient(0);
@@ -344,13 +344,13 @@ void driveClose(double dist) {
   }
 }
 
-// Run first to get robot aligned to a column.
+// Run first to get robot aligned to a row.
 void startUp() {
   Enes100.println("Initiating Launch Sequence.");
   updateEverything();
 
-  // Depending on column, drives to center of nearest.
-  // Tolerance of .2 meters from center of column to activate
+  // Depending on row, drives to center of nearest.
+  // Tolerance of .2 meters from center of row to activate
   if (!(fabs(locY - 0.333) < 0.2 || fabs(locY - 1) < 0.2 || fabs(locY - 1.666) < 0.2)) {
     if (locY < 0.66) {
       orient(locY < 0.33 ? 1.57 : -1.57);
@@ -575,6 +575,6 @@ void updateEverything() {
 }
 
 // Returns the row that a y coordinate is in if the field were split into 3 rows.
-int getColumn(double y) {
+int getRow(double y) {
   return y < 0.666 ? 1 : (y < 1.333 ? 2 : 3);
 }
