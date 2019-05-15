@@ -84,7 +84,7 @@ void setup() {
   liftArm();
   unAttachServo();
 
-  // Moves OSV to one of the three colunms.
+  // Moves OSV to one of the three rows.
   startUp();
 
   // Drive to the target to buffer distance.
@@ -141,17 +141,10 @@ void setup() {
   liftArm();
   Enes100.println("Arm Lifted");
 
-  // Drop arm just a little bit.
-  delay(1000);
-
   // Return if debris is steel or copper
-  if (steelCheck(baseline, measurement)) {
-    Enes100.mission(STEEL);
-  } else {
-    Enes100.mission(COPPER);
-  }
+  Enes100.mission(steelCheck(baseline, measurement) ? STEEL : COPPER);
 
-  // Return measured weight
+  // Return measured weight after a ~~wait~~ *weight*
   delay(2000);
   Enes100.mission(getWeight(20));
 }
