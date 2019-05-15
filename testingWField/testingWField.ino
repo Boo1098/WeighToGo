@@ -250,11 +250,6 @@ void driveFar(double x, double y, bool obsCheck) {
       double leftSpeed = 255;
       double rightSpeed = 255;
       double theta = locT - angleTo(x, y);
-      // abs is evil.
-      double atheta = theta;
-      if (atheta < 0) {
-        atheta *= -1.0;
-      }
 
       // Removes extraneous values
       double dist = getUltraDistance(TRIG_PIN, ECHO_PIN);
@@ -272,11 +267,11 @@ void driveFar(double x, double y, bool obsCheck) {
       // Prints error
       if (DEBUG) {
         Enes100.print("error: ");
-        Enes100.println(atheta);
+        Enes100.println(theta);
       }
 
       // Checks there is enough error to correct for.
-      if (atheta > 0.01) {
+      if (fabs(theta) > 0.01) {
         // Corrects in the correct direction.
         if (theta > 0) {
           rightSpeed -= abs(DRIVE_FAR_kP * theta);
