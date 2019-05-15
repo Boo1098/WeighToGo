@@ -80,10 +80,9 @@ void setup() {
   Enes100.println("OSV Initialized.");
 
   // Make sure arm is lifted all the way
-  myservo.attach(SERVO_PIN);
-  myservo.write(91);
+  attachServo();
   liftArm();
-  myservo.attach(15);
+  unAttachServo();
 
   // Moves OSV to one of the three colunms.
   startUp();
@@ -109,10 +108,7 @@ void setup() {
   }
 
   // ReAttach Servo
-  Enes100.println("Attaching Servo");
-  myservo.attach(SERVO_PIN);  // attaches the servo on pin 9 to the servo object
-  myservo.write(91);
-  Enes100.println("Servo Attached");
+  attachServo();
 
   // Lower Arm
   Enes100.println("Lowering Arm");
@@ -120,8 +116,7 @@ void setup() {
   Enes100.println("Arm Lowered");
 
   // UnAttach Servo
-  myservo.write(91);
-  myservo.attach(15);
+  unAttachServo();
 
   // Measure magneto baseline
   Enes100.println("Measuring Baseline");
@@ -139,8 +134,7 @@ void setup() {
   Enes100.println(measurement);
 
   // Reattach Servo
-  myservo.attach(SERVO_PIN);  // attaches the servo on pin 9 to the servo object
-  myservo.write(91);
+  attachServo();
 
   // Lift arm
   Enes100.println("Lifting Arm");
@@ -545,6 +539,22 @@ void liftArm() {
       break;  //Break from loop for safe measure
     }
   }
+}
+
+// Attaches Servo
+void attachServo() {
+  Enes100.println("Attaching Servo");
+  myservo.attach(SERVO_PIN);
+  myservo.write(91);
+  Enes100.println("Servo Attached");
+}
+
+// Unattaches Servo
+void unAttachServo() {
+  Enes100.println("Unattaching Servo");
+  myservo.write(91);
+  myservo.attach(15);
+  Enes100.println("Servo Unattached");
 }
 
 // Gives the angle relative to the horizontal from OSV to target.
