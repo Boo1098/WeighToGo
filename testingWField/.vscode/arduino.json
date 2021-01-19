@@ -1,5 +1,0 @@
-{
-    "board": "arduino:avr:uno",
-    "port": "COM6",
-    "sketch": "testingWField.ino"
-}
